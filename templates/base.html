@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}CNCSearch{% endblock %}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="d-flex">
+
+  <!-- Sidebar -->
+  <nav class="sidebar bg-dark text-white d-flex flex-column" style="width:220px;min-height:100vh;">
+    <div class="px-3 py-3 border-bottom border-secondary">
+      <span class="fs-5 fw-semibold">🎵 CNCSearch</span>
+    </div>
+    <ul class="nav flex-column mt-2 flex-grow-1">
+      <li class="nav-item">
+        <a class="nav-link text-white {% if request.url.path.startswith('/canticos') %}active{% endif %}"
+           href="/canticos">
+          <i class="bi bi-music-note-list me-2"></i>Cânticos
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link text-white {% if request.url.path.startswith('/momentos') %}active{% endif %}"
+           href="/momentos">
+          <i class="bi bi-clock me-2"></i>Momentos
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link text-white {% if request.url.path == '/search' %}active{% endif %}"
+           href="/search">
+          <i class="bi bi-search me-2"></i>Pesquisa Teste
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link text-white {% if request.url.path == '/settings' %}active{% endif %}"
+           href="/settings">
+          <i class="bi bi-gear me-2"></i>Configurações
+        </a>
+      </li>
+    </ul>
+    <div class="px-3 py-3 border-top border-secondary">
+      <a class="nav-link text-secondary small" href="/logout">
+        <i class="bi bi-box-arrow-left me-1"></i>Sair
+      </a>
+    </div>
+  </nav>
+
+  <!-- Main content -->
+  <main class="flex-grow-1 p-4 bg-light" style="min-height:100vh;">
+    {% block content %}{% endblock %}
+  </main>
+
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}{% if cantico %}Editar{% else %}Novo{% endif %} Cântico — CNCSearch{% endblock %}
+{% block content %}
+<div class="d-flex align-items-center mb-3 gap-2">
+  <a href="/canticos" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <h4 class="mb-0">
+    {% if cantico %}Editar Cântico{% else %}Novo Cântico{% endif %}
+  </h4>
+</div>
+
+{% if error %}
+<div class="alert alert-danger py-2 small">{{ error }}</div>
+{% endif %}
+
+<div class="card shadow-sm" style="max-width:760px;">
+  <div class="card-body">
+    <form method="post"
+          action="{% if cantico %}/canticos/{{ cantico.id }}/edit{% else %}/canticos/new{% endif %}">
+
+      <div class="mb-3">
+        <label class="form-label fw-medium">Título <span class="text-danger">*</span></label>
+        <input type="text" name="title" class="form-control"
+               value="{{ cantico.title if cantico else '' }}" required autofocus>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-medium">Letra <span class="text-danger">*</span></label>
+        <textarea name="lyrics" class="form-control font-monospace" rows="12"
+                  required placeholder="Cole aqui a letra completa do cântico...">{{ cantico.lyrics if cantico else '' }}</textarea>
+      </div>
+
+      <div class="row g-3 mb-3">
+        <div class="col-md-8">
+          <label class="form-label fw-medium">URL da Pauta</label>
+          <input type="url" name="sheet_url" class="form-control"
+                 value="{{ cantico.sheet_url if cantico and cantico.sheet_url else '' }}"
+                 placeholder="https://app.resucito.es/...">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-medium">Momento Litúrgico</label>
+          <select name="moment_id" class="form-select">
+            <option value="">— nenhum —</option>
+            {% for m in moments %}
+            <option value="{{ m.id }}"
+              {% if cantico and cantico.moment_id == m.id %}selected{% endif %}>
+              {{ m.name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-check-lg me-1"></i>
+          {% if cantico %}Guardar alterações{% else %}Criar Cântico{% endif %}
+        </button>
+        <a href="/canticos" class="btn btn-outline-secondary">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

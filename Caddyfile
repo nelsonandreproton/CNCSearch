@@ -1,0 +1,7 @@
+# Replace YOUR-IP-WITH-DASHES with your Hetzner IP (e.g. 1.2.3.4 → 1-2-3-4)
+# Full address will be: https://1-2-3-4.sslip.io
+# Let's Encrypt certificate is obtained automatically.
+
+{$CADDY_HOST} {
+    reverse_proxy cncsearch:8080
+}

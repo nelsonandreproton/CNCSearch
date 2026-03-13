@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Pesquisa Teste — CNCSearch{% endblock %}
+{% block content %}
+<h4 class="mb-3"><i class="bi bi-search me-2 text-primary"></i>Pesquisa Teste</h4>
+
+<div class="card shadow-sm mb-4" style="max-width:700px;">
+  <div class="card-body">
+    <form method="post" action="/search">
+      <div class="mb-3">
+        <label class="form-label fw-medium">Texto Bíblico</label>
+        <textarea name="query" class="form-control" rows="3"
+                  placeholder="ex: E Deus amou tanto o mundo que deu o seu Filho unigénito..."
+                  required>{{ query }}</textarea>
+      </div>
+
+      <div class="row g-3 mb-3">
+        <div class="col-sm-4">
+          <label class="form-label fw-medium">
+            Nº de resultados
+            <span class="text-muted small">(defeito: {{ settings.top_n }})</span>
+          </label>
+          <input type="number" name="top_n" class="form-control"
+                 min="1" max="20" placeholder="{{ settings.top_n }}">
+        </div>
+        <div class="col-sm-8">
+          <label class="form-label fw-medium">Momento (opcional)</label>
+          <select name="moment_id" class="form-select">
+            <option value="">— todos os momentos —</option>
+            {% for m in moments %}
+            <option value="{{ m.id }}">{{ m.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary">
+        <i class="bi bi-search me-1"></i>Pesquisar
+      </button>
+    </form>
+  </div>
+</div>
+
+{% if error %}
+<div class="alert alert-danger py-2 small">{{ error }}</div>
+{% endif %}
+
+{% if results is not none %}
+  {% if results %}
+  <h6 class="text-muted mb-2">{{ results|length }} resultado(s) para <em>{{ query }}</em></h6>
+  <div class="d-flex flex-column gap-3" style="max-width:700px;">
+    {% for r in results %}
+    <div class="card shadow-sm">
+      <div class="card-body py-3">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
+            <h6 class="mb-1">{{ loop.index }}. {{ r.title }}</h6>
+            {% if r.moment_name %}
+            <span class="badge bg-secondary small">{{ r.moment_name }}</span>
+            {% endif %}
+          </div>
+          <span class="badge bg-primary fs-6 ms-2">{{ "%.0f"|format(r.similarity * 100) }}%</span>
+        </div>
+        {% if r.sheet_url %}
+        <div class="mt-2">
+          <a href="{{ r.sheet_url }}" target="_blank" class="text-decoration-none small">
+            <i class="bi bi-music-note-beamed me-1"></i>Ver pauta
+          </a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="alert alert-warning" style="max-width:700px;">
+    <i class="bi bi-exclamation-triangle me-1"></i>
+    Nenhum cântico com correspondência suficiente
+    (mínimo {{ "%.0f"|format(settings.min_similarity|float * 100) }}%).
+  </div>
+  {% endif %}
+{% endif %}
+{% endblock %}

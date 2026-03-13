@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wc -l /c/DEV/GarminBot/src/telegram/commands/*.py)",
+      "Bash(grep -E \"\\\\.\\(py|md|txt|yml|yaml|toml\\)$\")"
+    ]
+  }
+}

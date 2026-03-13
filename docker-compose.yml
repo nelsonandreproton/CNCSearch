@@ -1,0 +1,58 @@
+services:
+
+  # ── CNCSearch web UI ────────────────────────────────────────────────────────
+  cncsearch:
+    build: .
+    container_name: cncsearch
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - cncsearch_data:/data
+    expose:
+      - "8080"
+
+  # ── HTTPS reverse proxy (Caddy) ─────────────────────────────────────────────
+  caddy:
+    image: caddy:2-alpine
+    container_name: cncsearch_caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      # Set to: YOUR-IP-WITH-DASHES.sslip.io  (e.g. 1-2-3-4.sslip.io)
+      CADDY_HOST: ${CADDY_HOST}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - cncsearch
+
+  # ── GarminBot (extended with CNCSearch handler) ─────────────────────────────
+  # This service mounts CNCSearch source into GarminBot's container so
+  # the /canticos handler can be imported. GarminBot's main.py needs
+  # 3 lines added — see README for instructions.
+  garminbot:
+    build:
+      context: ../GarminBot
+      dockerfile: Dockerfile
+    container_name: garminbot
+    restart: unless-stopped
+    env_file: ../GarminBot/.env
+    environment:
+      PYTHONPATH: /cncsearch
+      CNCSEARCH_DATABASE_PATH: /cncsearch_data/cncsearch.db
+      CNCSEARCH_EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-jina}
+      CNCSEARCH_JINA_API_KEY: ${JINA_API_KEY}
+    volumes:
+      - garminbot_data:/app/data
+      - cncsearch_data:/cncsearch_data          # shared DB with cncsearch
+      - .:/cncsearch:ro                          # mount CNCSearch source (read-only)
+
+volumes:
+  cncsearch_data:
+  garminbot_data:
+  caddy_data:
+  caddy_config:

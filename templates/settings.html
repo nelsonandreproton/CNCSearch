@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}Configurações — CNCSearch{% endblock %}
+{% block content %}
+<h4 class="mb-3"><i class="bi bi-gear me-2 text-primary"></i>Configurações</h4>
+
+{% if success %}
+<div class="alert alert-success alert-dismissible py-2 small">
+  {{ success }}<button type="button" class="btn-close btn-sm" data-bs-dismiss="alert"></button>
+</div>
+{% endif %}
+{% if error %}
+<div class="alert alert-danger alert-dismissible py-2 small">
+  {{ error }}<button type="button" class="btn-close btn-sm" data-bs-dismiss="alert"></button>
+</div>
+{% endif %}
+
+<div class="row g-4">
+  <!-- Search settings -->
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h6 class="card-title mb-3"><i class="bi bi-sliders me-1"></i>Pesquisa</h6>
+        <form method="post" action="/settings">
+          <div class="mb-3">
+            <label class="form-label fw-medium">
+              Nº de resultados por defeito
+              <span class="text-muted small">(usado quando não especificado no comando)</span>
+            </label>
+            <input type="number" name="top_n" class="form-control" style="max-width:100px;"
+                   value="{{ settings.top_n }}" min="1" max="20" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-medium d-flex justify-content-between">
+              Similaridade mínima
+              <span class="text-primary fw-bold" id="simLabel">{{ "%.0f"|format(settings.min_similarity|float * 100) }}%</span>
+            </label>
+            <input type="range" name="min_similarity" class="form-range"
+                   min="0" max="1" step="0.05"
+                   value="{{ settings.min_similarity }}"
+                   oninput="document.getElementById('simLabel').textContent = Math.round(this.value*100)+'%'">
+            <div class="d-flex justify-content-between text-muted small">
+              <span>0% (tudo)</span><span>50%</span><span>100% (exacto)</span>
+            </div>
+          </div>
+
+          <hr>
+          <h6 class="mb-3"><i class="bi bi-person me-1"></i>Conta</h6>
+
+          <div class="mb-3">
+            <label class="form-label fw-medium">Utilizador</label>
+            <input type="text" name="web_username" class="form-control"
+                   value="{{ settings.web_username }}" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-medium">Palavra-passe actual</label>
+            <input type="password" name="current_password" class="form-control"
+                   placeholder="Preenche para alterar a palavra-passe">
+          </div>
+          <div class="row g-2 mb-4">
+            <div class="col">
+              <label class="form-label fw-medium">Nova palavra-passe</label>
+              <input type="password" name="new_password" class="form-control" placeholder="(opcional)">
+            </div>
+            <div class="col">
+              <label class="form-label fw-medium">Confirmar</label>
+              <input type="password" name="confirm_password" class="form-control">
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-lg me-1"></i>Guardar configurações
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Embeddings -->
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h6 class="card-title mb-3"><i class="bi bi-cpu me-1"></i>Indexação de Embeddings</h6>
+
+        <div class="mb-3">
+          <div class="d-flex justify-content-between small text-muted mb-1">
+            <span>Total de cânticos</span>
+            <strong>{{ total_canticos }}</strong>
+          </div>
+          <div class="d-flex justify-content-between small text-muted mb-1">
+            <span>Sem embedding</span>
+            <strong class="{% if without_embedding > 0 %}text-warning{% else %}text-success{% endif %}">
+              {{ without_embedding }}
+            </strong>
+          </div>
+        </div>
+
+        {% if without_embedding > 0 %}
+        <div class="alert alert-warning py-2 small mb-3">
+          <i class="bi bi-exclamation-triangle me-1"></i>
+          {{ without_embedding }} cântico(s) sem embedding — não aparecem nas pesquisas.
+        </div>
+        {% endif %}
+
+        <p class="text-muted small">
+          Usa <strong>Re-indexar</strong> se mudaste o modelo de embeddings
+          ou importaste cânticos em massa.
+        </p>
+
+        <form method="post" action="/reindex"
+              onsubmit="return confirm('Re-indexar todos os {{ total_canticos }} cânticos? Pode demorar alguns segundos.')">
+          <button type="submit" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-clockwise me-1"></i>Re-indexar todos
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
