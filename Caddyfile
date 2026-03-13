@@ -5,3 +5,12 @@
 {$CADDY_HOST} {
     reverse_proxy cncsearch:8080
 }
+
+# ── Cânticos públicos da Paróquia ────────────────────────────────────────────
+# Requer registo DNS: A canticos → IP do servidor
+# Certificado HTTPS obtido automaticamente pelo Caddy via Let's Encrypt.
+canticos.paroquiacasaldecambra.pt {
+    # Redireciona a raiz directamente para o directório de cânticos
+    redir / /paroquia permanent
+    reverse_proxy cncsearch:8080
+}
