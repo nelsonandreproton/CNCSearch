@@ -18,6 +18,7 @@ class Config:
     web_secret_key: str
     web_initial_password: str
     log_level: str
+    adsense_client_id: str  # e.g. "ca-pub-1234567890123456", empty to disable ads
 
     @classmethod
     def from_env(cls) -> "Config":
@@ -41,4 +42,5 @@ class Config:
             web_secret_key=secret_key,
             web_initial_password=os.environ.get("WEB_INITIAL_PASSWORD", "admin"),
             log_level=os.environ.get("LOG_LEVEL", "INFO"),
+            adsense_client_id=os.environ.get("ADSENSE_CLIENT_ID", ""),
         )

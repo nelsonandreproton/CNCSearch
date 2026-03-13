@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="{{ cantico.title }} — letra do cântico da Paróquia de Santa Marta de Casal de Cambra">
+  <title>{{ cantico.title }} | Cânticos da Paróquia</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
+  {% if adsense_client_id %}
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={{ adsense_client_id }}" crossorigin="anonymous"></script>
+  {% endif %}
+
+  <style>
+    :root {
+      --green: #57BB8A;
+      --green-dark: #3d9a6e;
+      --dark: #4F474E;
+      --light-bg: #EAEBE6;
+      --lyrics-size: 1.08rem;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Open Sans', sans-serif;
+      background: #f8f9fa;
+      color: #212121;
+      margin: 0;
+      /* bottom padding so sticky nav doesn't overlap content */
+      padding-bottom: 80px;
+    }
+
+    /* ── Sticky top bar ── */
+    .top-bar {
+      background: var(--dark);
+      color: white;
+      padding: 0.6rem 1rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .back-link {
+      color: white;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .back-link:hover { color: var(--green); }
+    .page-count {
+      margin-left: auto;
+      font-size: 0.8rem;
+      opacity: 0.65;
+      white-space: nowrap;
+    }
+
+    /* ── Font size controls ── */
+    .font-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      flex-shrink: 0;
+    }
+    .font-btn {
+      width: 30px;
+      height: 30px;
+      border: 1px solid rgba(255,255,255,0.3);
+      background: transparent;
+      border-radius: 50%;
+      color: white;
+      font-size: 0.7rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      line-height: 1;
+      transition: background 0.12s;
+    }
+    .font-btn:hover { background: rgba(255,255,255,0.15); }
+
+    /* ── Song title band ── */
+    .song-header {
+      background: var(--green);
+      color: white;
+      padding: 1.2rem 1rem 1rem;
+    }
+    .song-title {
+      font-family: 'Roboto Condensed', sans-serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      line-height: 1.2;
+      margin: 0;
+    }
+    .song-num-badge {
+      display: inline-block;
+      background: rgba(0,0,0,0.15);
+      border-radius: 1rem;
+      padding: 0.15rem 0.65rem;
+      font-size: 0.78rem;
+      margin-top: 0.4rem;
+    }
+
+    /* ── AdSense ── */
+    .ad-slot { padding: 0.5rem 1rem; }
+
+    /* ── Lyrics ── */
+    .lyrics-wrap {
+      padding: 1.2rem 1rem 0.5rem;
+      max-width: 700px;
+    }
+    .stanza {
+      font-size: var(--lyrics-size);
+      line-height: 1.85;
+      margin-bottom: 1.4em;
+    }
+
+    /* ── Sticky bottom nav ── */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      border-top: 1px solid #e0e0e0;
+      padding: 0.6rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      z-index: 100;
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.08);
+    }
+    .nav-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.55rem 1.1rem;
+      border-radius: 2rem;
+      font-weight: 600;
+      font-size: 0.88rem;
+      text-decoration: none;
+      min-height: 44px;
+      transition: background 0.12s, opacity 0.12s;
+      border: none;
+      cursor: pointer;
+    }
+    .nav-btn-prev {
+      background: var(--light-bg);
+      color: var(--dark);
+    }
+    .nav-btn-prev:hover { background: #d5d6d1; color: var(--dark); }
+    .nav-btn-next {
+      background: var(--green);
+      color: white;
+      margin-left: auto;
+    }
+    .nav-btn-next:hover { background: var(--green-dark); color: white; }
+    .nav-btn.disabled {
+      opacity: 0.35;
+      pointer-events: none;
+    }
+    .nav-center {
+      flex: 1;
+      text-align: center;
+      font-size: 0.78rem;
+      color: #999;
+    }
+
+    /* ── Footer ── */
+    footer {
+      background: var(--dark);
+      color: rgba(255,255,255,0.65);
+      padding: 1.5rem 1rem;
+      font-size: 0.82rem;
+      text-align: center;
+      margin-top: 1rem;
+    }
+    footer strong { color: rgba(255,255,255,0.9); }
+    footer a { color: var(--green); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+  <!-- ── Sticky top bar ── -->
+  <div class="top-bar">
+    <a href="/paroquia" class="back-link" aria-label="Voltar ao índice">
+      <i class="bi bi-arrow-left"></i>
+      <span>Índice</span>
+    </a>
+    <span class="page-count">{{ position }} / {{ total }}</span>
+    <div class="font-controls" aria-label="Tamanho da letra">
+      <button class="font-btn" id="fontMinus" title="Reduzir letra" aria-label="Reduzir letra">A−</button>
+      <button class="font-btn" id="fontPlus"  title="Aumentar letra" aria-label="Aumentar letra">A+</button>
+    </div>
+  </div>
+
+  <!-- ── Song title ── -->
+  <div class="song-header">
+    <h1 class="song-title">{{ cantico.title }}</h1>
+    <div class="song-num-badge">Cântico {{ position }} de {{ total }}</div>
+  </div>
+
+  <!-- ── AdSense top ── -->
+  {% if adsense_client_id %}
+  <div class="ad-slot">
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="{{ adsense_client_id }}"
+         data-ad-slot="AUTO"
+         data-ad-format="auto"
+         data-full-width-responsive="true"></ins>
+    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+  </div>
+  {% endif %}
+
+  <!-- ── Lyrics ── -->
+  <div class="lyrics-wrap" id="lyricsWrap">
+    {% for stanza in cantico.lyrics.split('\n\n') %}
+      {% if stanza.strip() %}
+      <p class="stanza">{% for line in stanza.split('\n') %}{% if line.strip() %}{{ line }}{% if not loop.last %}<br>{% endif %}{% endif %}{% endfor %}</p>
+      {% endif %}
+    {% endfor %}
+  </div>
+
+  <!-- ── AdSense mid ── -->
+  {% if adsense_client_id %}
+  <div class="ad-slot">
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="{{ adsense_client_id }}"
+         data-ad-slot="AUTO"
+         data-ad-format="auto"
+         data-full-width-responsive="true"></ins>
+    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+  </div>
+  {% endif %}
+
+  <!-- ── Footer ── -->
+  <footer>
+    <p>Paróquia de <strong>Santa Marta de Casal de Cambra</strong></p>
+    <p><a href="https://www.paroquiacasaldecambra.pt/" target="_blank" rel="noopener">
+      paroquiacasaldecambra.pt
+    </a></p>
+  </footer>
+
+  <!-- ── Sticky bottom navigation ── -->
+  <nav class="bottom-nav" aria-label="Navegação entre cânticos">
+    {% if prev_id %}
+    <a href="/paroquia/{{ prev_id }}" class="nav-btn nav-btn-prev" aria-label="Cântico anterior">
+      <i class="bi bi-chevron-left"></i>Anterior
+    </a>
+    {% else %}
+    <span class="nav-btn nav-btn-prev disabled" aria-disabled="true">
+      <i class="bi bi-chevron-left"></i>Anterior
+    </span>
+    {% endif %}
+
+    <span class="nav-center">{{ position }} / {{ total }}</span>
+
+    {% if next_id %}
+    <a href="/paroquia/{{ next_id }}" class="nav-btn nav-btn-next" aria-label="Próximo cântico">
+      Próximo<i class="bi bi-chevron-right"></i>
+    </a>
+    {% else %}
+    <span class="nav-btn nav-btn-next disabled" aria-disabled="true">
+      Próximo<i class="bi bi-chevron-right"></i>
+    </span>
+    {% endif %}
+  </nav>
+
+  <script>
+    // ── Font size persistence ──────────────────────────────────────────────
+    const STORAGE_KEY = 'paroquia-font-size';
+    const MIN_SIZE = 0.85, MAX_SIZE = 1.9, STEP = 0.12;
+    let fontSize = parseFloat(localStorage.getItem(STORAGE_KEY) || '1.08');
+
+    function applyFontSize() {
+      fontSize = Math.min(MAX_SIZE, Math.max(MIN_SIZE, fontSize));
+      document.querySelectorAll('.stanza').forEach(el => {
+        el.style.fontSize = fontSize + 'rem';
+      });
+      localStorage.setItem(STORAGE_KEY, fontSize);
+    }
+
+    applyFontSize();  // apply saved size on load
+
+    document.getElementById('fontPlus').addEventListener('click', () => {
+      fontSize += STEP;
+      applyFontSize();
+    });
+    document.getElementById('fontMinus').addEventListener('click', () => {
+      fontSize -= STEP;
+      applyFontSize();
+    });
+  </script>
+</body>
+</html>

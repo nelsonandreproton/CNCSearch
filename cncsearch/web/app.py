@@ -14,7 +14,7 @@ from ..config import Config
 from ..database.repository import Repository
 from ..search.service import SearchService
 from ..web.auth import hash_password
-from .routes import auth, canticos, momentos, search, settings
+from .routes import auth, canticos, momentos, paroquia_pub, search, settings
 
 logger = logging.getLogger(__name__)
 
@@ -70,6 +70,7 @@ def create_app() -> FastAPI:
     app.include_router(momentos.router)
     app.include_router(settings.router)
     app.include_router(search.router)
+    app.include_router(paroquia_pub.router)  # public — no auth
 
     # Root redirect
     from fastapi.responses import RedirectResponse

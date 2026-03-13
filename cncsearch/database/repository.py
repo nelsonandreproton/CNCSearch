@@ -286,6 +286,30 @@ class Repository:
                 for c in rows
             ]
 
+    def get_paroquia_neighbors(self, cantico_id: int) -> dict:
+        """Return prev/next IDs and book position for a paroquia cantico.
+
+        Book order = insertion order (by id), matching the original hymn book.
+        """
+        with self.Session() as s:
+            all_ids = [
+                r[0]
+                for r in s.query(Cantico.id)
+                .filter(Cantico.source == "paroquia")
+                .order_by(Cantico.id)
+                .all()
+            ]
+        total = len(all_ids)
+        if cantico_id not in all_ids:
+            return {"prev_id": None, "next_id": None, "position": 0, "total": total}
+        idx = all_ids.index(cantico_id)
+        return {
+            "prev_id": all_ids[idx - 1] if idx > 0 else None,
+            "next_id": all_ids[idx + 1] if idx < total - 1 else None,
+            "position": idx + 1,
+            "total": total,
+        }
+
     def count_canticos(self) -> int:
         with self.Session() as s:
             return s.query(Cantico).count()

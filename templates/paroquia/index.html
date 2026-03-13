@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Diretório de cânticos da Paróquia de Santa Marta de Casal de Cambra. Pesquise e consulte as letras dos cânticos no telemóvel.">
+  <title>Cânticos da Paróquia | Santa Marta de Casal de Cambra</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
+  {% if adsense_client_id %}
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={{ adsense_client_id }}" crossorigin="anonymous"></script>
+  {% endif %}
+
+  <style>
+    :root {
+      --green: #57BB8A;
+      --green-dark: #3d9a6e;
+      --dark: #4F474E;
+      --light-bg: #EAEBE6;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Open Sans', sans-serif;
+      background: #f8f9fa;
+      color: #212121;
+      margin: 0;
+    }
+
+    /* ── Header ── */
+    .site-header {
+      background: var(--dark);
+      color: white;
+      padding: 0.9rem 1rem;
+    }
+    .site-header h1 {
+      font-family: 'Roboto Condensed', sans-serif;
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin: 0;
+      line-height: 1.2;
+    }
+    .site-header .subtitle {
+      font-size: 0.78rem;
+      opacity: 0.75;
+      margin: 0;
+    }
+    .header-icon {
+      width: 42px;
+      height: 42px;
+      background: var(--green);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+    .total-badge {
+      background: rgba(255,255,255,0.15);
+      border-radius: 1rem;
+      padding: 0.2rem 0.7rem;
+      font-size: 0.8rem;
+      white-space: nowrap;
+    }
+
+    /* ── Search section ── */
+    .search-section {
+      background: var(--green);
+      padding: 1rem;
+    }
+    .search-wrap {
+      position: relative;
+    }
+    .search-wrap .bi-search {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #999;
+      pointer-events: none;
+    }
+    #searchInput {
+      width: 100%;
+      border: none;
+      border-radius: 2rem;
+      padding: 0.7rem 1rem 0.7rem 2.6rem;
+      font-size: 1rem;
+      font-family: 'Open Sans', sans-serif;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      outline: none;
+    }
+    #searchInput:focus {
+      box-shadow: 0 0 0 3px rgba(255,255,255,0.5);
+    }
+
+    /* ── A-Z nav ── */
+    .az-nav {
+      background: white;
+      border-bottom: 2px solid var(--light-bg);
+      overflow-x: auto;
+      white-space: nowrap;
+      -webkit-overflow-scrolling: touch;
+      padding: 0.4rem 0.5rem;
+      scrollbar-width: none;
+    }
+    .az-nav::-webkit-scrollbar { display: none; }
+    .az-btn {
+      display: inline-block;
+      padding: 0.35rem 0.65rem;
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: var(--dark);
+      cursor: pointer;
+      border-radius: 6px;
+      transition: background 0.12s, color 0.12s;
+      user-select: none;
+    }
+    .az-btn:hover { background: var(--light-bg); }
+    .az-btn.active {
+      background: var(--green);
+      color: white;
+    }
+
+    /* ── Ad slot ── */
+    .ad-slot { padding: 0.5rem 1rem; }
+
+    /* ── Song list ── */
+    .section-header {
+      background: var(--light-bg);
+      padding: 0.35rem 1rem;
+      font-family: 'Roboto Condensed', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--dark);
+      letter-spacing: 0.05em;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+    .song-item {
+      display: flex;
+      align-items: center;
+      padding: 0.65rem 1rem;
+      border-bottom: 1px solid #f0f0f0;
+      text-decoration: none;
+      color: #212121;
+      transition: background 0.1s;
+      -webkit-tap-highlight-color: rgba(87,187,138,0.15);
+    }
+    .song-item:hover,
+    .song-item:focus {
+      background: #f0faf5;
+      color: #212121;
+    }
+    .song-seq {
+      min-width: 2.2rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #bbb;
+    }
+    .song-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      flex: 1;
+    }
+    .song-arrow {
+      color: #ccc;
+      font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+
+    /* ── No results ── */
+    .no-results {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: #999;
+    }
+    .no-results .bi { font-size: 2.5rem; }
+
+    /* ── Footer ── */
+    footer {
+      background: var(--dark);
+      color: rgba(255,255,255,0.65);
+      padding: 1.5rem 1rem;
+      font-size: 0.82rem;
+      text-align: center;
+      margin-top: 1.5rem;
+    }
+    footer strong { color: rgba(255,255,255,0.9); }
+    footer a { color: var(--green); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+  <!-- ── Header ── -->
+  <header class="site-header">
+    <div class="d-flex align-items-center gap-3">
+      <div class="header-icon">🎵</div>
+      <div>
+        <h1>Cânticos da Paróquia</h1>
+        <p class="subtitle">Santa Marta de Casal de Cambra</p>
+      </div>
+      <span class="total-badge ms-auto">{{ total }} cânticos</span>
+    </div>
+  </header>
+
+  <!-- ── Search ── -->
+  <div class="search-section">
+    <div class="search-wrap">
+      <i class="bi bi-search"></i>
+      <input type="search" id="searchInput"
+             placeholder="Pesquisar pelo título..."
+             autocomplete="off" autocorrect="off" spellcheck="false"
+             aria-label="Pesquisar cânticos">
+    </div>
+  </div>
+
+  <!-- ── AdSense top ── -->
+  {% if adsense_client_id %}
+  <div class="ad-slot">
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="{{ adsense_client_id }}"
+         data-ad-slot="AUTO"
+         data-ad-format="auto"
+         data-full-width-responsive="true"></ins>
+    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+  </div>
+  {% endif %}
+
+  <!-- ── A-Z navigation ── -->
+  <nav class="az-nav" role="navigation" aria-label="Filtro alfabético">
+    <span class="az-btn active" data-letter="ALL">Todos</span>
+    {% for letter in az_letters %}
+    <span class="az-btn" data-letter="{{ letter }}">{{ letter }}</span>
+    {% endfor %}
+  </nav>
+
+  <!-- ── Song list ── -->
+  <div id="songList" role="list">
+    {% set cur = namespace(letter='') %}
+    {% for song in songs %}
+      {% if song.norm_first != cur.letter %}
+        {% set cur.letter = song.norm_first %}
+        <div class="section-header" data-section="{{ song.norm_first }}" role="separator">
+          {{ song.norm_first }}
+        </div>
+      {% endif %}
+      <a href="/paroquia/{{ song.cantico.id }}"
+         class="song-item"
+         data-title="{{ song.cantico.title | lower }}"
+         data-first="{{ song.norm_first }}"
+         role="listitem">
+        <span class="song-seq">{{ song.seq }}</span>
+        <span class="song-title">{{ song.cantico.title }}</span>
+        <i class="bi bi-chevron-right song-arrow"></i>
+      </a>
+    {% endfor %}
+
+    <div id="noResults" class="no-results" style="display:none" aria-live="polite">
+      <i class="bi bi-search d-block mb-2"></i>
+      <p>Nenhum cântico encontrado</p>
+    </div>
+  </div>
+
+  <!-- ── AdSense bottom ── -->
+  {% if adsense_client_id %}
+  <div class="ad-slot">
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="{{ adsense_client_id }}"
+         data-ad-slot="AUTO"
+         data-ad-format="auto"
+         data-full-width-responsive="true"></ins>
+    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+  </div>
+  {% endif %}
+
+  <!-- ── Footer ── -->
+  <footer>
+    <p>Paróquia de <strong>Santa Marta de Casal de Cambra</strong></p>
+    <p><a href="https://www.paroquiacasaldecambra.pt/" target="_blank" rel="noopener">
+      paroquiacasaldecambra.pt
+    </a></p>
+  </footer>
+
+  <script>
+    const searchInput = document.getElementById('searchInput');
+    const songItems   = document.querySelectorAll('.song-item');
+    const sections    = document.querySelectorAll('.section-header');
+    const noResults   = document.getElementById('noResults');
+    const azBtns      = document.querySelectorAll('.az-btn');
+
+    let activeFilter = 'ALL';
+
+    function applyFilter() {
+      const q = searchInput.value.toLowerCase().trim();
+      let visible = 0;
+
+      songItems.forEach(el => {
+        const titleMatch  = !q || el.dataset.title.includes(q);
+        const letterMatch = activeFilter === 'ALL' || el.dataset.first === activeFilter;
+        const show = titleMatch && letterMatch;
+        el.style.display = show ? 'flex' : 'none';
+        if (show) visible++;
+      });
+
+      // Show/hide section headers based on whether they have visible children
+      sections.forEach(sec => {
+        const letter = sec.dataset.section;
+        const hasAny = [...songItems].some(
+          el => el.dataset.first === letter && el.style.display !== 'none'
+        );
+        sec.style.display = hasAny ? 'block' : 'none';
+      });
+
+      noResults.style.display = visible === 0 ? 'block' : 'none';
+    }
+
+    searchInput.addEventListener('input', applyFilter);
+
+    azBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        azBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeFilter = btn.dataset.letter;
+        // Clear search when picking a letter
+        searchInput.value = '';
+        applyFilter();
+
+        // Scroll to section if filtering by letter
+        if (activeFilter !== 'ALL') {
+          const sec = document.querySelector(`.section-header[data-section="${activeFilter}"]`);
+          if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
+  </script>
+</body>
+</html>
