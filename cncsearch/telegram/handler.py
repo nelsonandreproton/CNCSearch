@@ -74,6 +74,7 @@ def _make_handler(
         web_secret_key="",
         web_initial_password="",
         log_level="INFO",
+        adsense_client_id="",
     )
     repo = Repository(db_path)
     repo.init_database()
