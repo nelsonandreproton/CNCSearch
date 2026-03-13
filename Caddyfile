@@ -9,8 +9,18 @@
 # ── Cânticos públicos da Paróquia ────────────────────────────────────────────
 # Requer registo DNS: A canticos → IP do servidor
 # Certificado HTTPS obtido automaticamente pelo Caddy via Let's Encrypt.
+# Apenas as rotas /paroquia/* são expostas — admin inacessível neste domínio.
 canticos.paroquiacasaldecambra.pt {
-    # Redireciona a raiz directamente para o directório de cânticos
+    # Raiz → directório de cânticos
     redir / /paroquia permanent
-    reverse_proxy cncsearch:8080
+
+    # Serve apenas as páginas públicas da paróquia
+    handle /paroquia* {
+        reverse_proxy cncsearch:8080
+    }
+
+    # Qualquer outra rota → redireciona para o directório (não expõe admin)
+    handle {
+        redir * /paroquia permanent
+    }
 }
