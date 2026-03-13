@@ -54,16 +54,17 @@ class SearchService:
         """
         Return top_n canticos most similar to query, above min_similarity.
 
-        Each result: {id, title, sheet_url, moment_id, similarity (0-1)}
+        Each result: {id, title, sheet_url, moment_ids, similarity (0-1)}
+        moment_id filter: only include canticos that have this moment in their list.
         """
         query_emb = self._embed([query])[0]
         rows = self.repo.get_all_for_search()
 
         results = []
-        for cid, title, sheet_url, mid, blob in rows:
+        for cid, title, sheet_url, moment_ids, blob in rows:
             if blob is None:
                 continue
-            if moment_id is not None and mid != moment_id:
+            if moment_id is not None and moment_id not in moment_ids:
                 continue
             emb = _from_blob(blob)
             sim = _cosine_similarity(query_emb, emb)
@@ -73,7 +74,7 @@ class SearchService:
                         "id": cid,
                         "title": title,
                         "sheet_url": sheet_url,
-                        "moment_id": mid,
+                        "moment_ids": moment_ids,
                         "similarity": sim,
                     }
                 )

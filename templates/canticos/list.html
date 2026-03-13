@@ -41,8 +41,10 @@
         <tr>
           <td class="fw-medium">{{ c.title }}</td>
           <td>
-            {% if c.moment %}
-            <span class="badge bg-secondary">{{ c.moment.name }}</span>
+            {% if c.moments %}
+            {% for m in c.moments %}
+            <span class="badge bg-secondary me-1">{{ m.name }}</span>
+            {% endfor %}
             {% else %}
             <span class="text-muted small">—</span>
             {% endif %}

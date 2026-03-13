@@ -32,23 +32,27 @@
       </div>
 
       <div class="row g-3 mb-3">
-        <div class="col-md-8">
+        <div class="col-md-6">
           <label class="form-label fw-medium">URL da Pauta</label>
           <input type="url" name="sheet_url" class="form-control"
                  value="{{ cantico.sheet_url if cantico and cantico.sheet_url else '' }}"
                  placeholder="https://app.resucito.es/...">
         </div>
-        <div class="col-md-4">
-          <label class="form-label fw-medium">Momento Litúrgico</label>
-          <select name="moment_id" class="form-select">
-            <option value="">— nenhum —</option>
+        <div class="col-md-6">
+          <label class="form-label fw-medium">
+            Momentos Litúrgicos
+            <span class="text-muted fw-normal small">(Ctrl/Cmd para selecionar vários)</span>
+          </label>
+          {% set selected_ids = cantico.moments | map(attribute='id') | list if cantico else [] %}
+          <select name="moment_id" class="form-select" multiple size="5">
             {% for m in moments %}
             <option value="{{ m.id }}"
-              {% if cantico and cantico.moment_id == m.id %}selected{% endif %}>
+              {% if m.id in selected_ids %}selected{% endif %}>
               {{ m.name }}
             </option>
             {% endfor %}
           </select>
+          <div class="form-text">Deixa sem seleção para nenhum momento.</div>
         </div>
       </div>
 

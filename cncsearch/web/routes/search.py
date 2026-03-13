@@ -56,10 +56,11 @@ async def search_submit(
 
     try:
         results = await asyncio.to_thread(search.search, query.strip(), n, min_sim, mid)
-        # Attach moment name to each result
+        # Attach moment names to each result
         moment_map = {m.id: m.name for m in moments}
         for r in results:
-            r["moment_name"] = moment_map.get(r["moment_id"], "") if r["moment_id"] else ""
+            names = [moment_map[mid] for mid in r.get("moment_ids", []) if mid in moment_map]
+            r["moment_name"] = ", ".join(names)
         error = ""
     except Exception:
         results = []

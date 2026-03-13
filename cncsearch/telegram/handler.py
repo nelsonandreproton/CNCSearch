@@ -130,13 +130,17 @@ def _make_handler(
             return
 
         # Build response
+        moment_cache: dict[int, str] = {}
         lines = [f"🎵 <b>Cânticos para:</b> <i>{query_text}</i>\n"]
         for i, r in enumerate(results, 1):
-            moment_label = ""
-            if r["moment_id"]:
-                m = repo.get_moment(r["moment_id"])
-                if m:
-                    moment_label = f" <i>[{m.name}]</i>"
+            moment_names = []
+            for mid in r.get("moment_ids", []):
+                if mid not in moment_cache:
+                    m = repo.get_moment(mid)
+                    moment_cache[mid] = m.name if m else ""
+                if moment_cache[mid]:
+                    moment_names.append(moment_cache[mid])
+            moment_label = f" <i>[{', '.join(moment_names)}]</i>" if moment_names else ""
 
             lines.append(
                 f"{i}. <b>{r['title']}</b> ({r['similarity']:.0%}){moment_label}"

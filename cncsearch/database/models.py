@@ -4,12 +4,21 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, LargeBinary, String, Text
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, LargeBinary, String, Table, Text
 from sqlalchemy.orm import DeclarativeBase, relationship
 
 
 class Base(DeclarativeBase):
     pass
+
+
+# Many-to-many association table: a cantico can belong to multiple moments
+cantico_moments = Table(
+    "cantico_moments",
+    Base.metadata,
+    Column("cantico_id", Integer, ForeignKey("canticos.id", ondelete="CASCADE"), primary_key=True),
+    Column("moment_id", Integer, ForeignKey("moments.id", ondelete="CASCADE"), primary_key=True),
+)
 
 
 class Moment(Base):
@@ -21,14 +30,14 @@ class Moment(Base):
     name = Column(String(100), unique=True, nullable=False)
     created_at = Column(DateTime, default=lambda: datetime.now(UTC))
 
-    canticos = relationship("Cantico", back_populates="moment")
+    canticos = relationship("Cantico", secondary=cantico_moments, back_populates="moments")
 
     def __repr__(self) -> str:
         return f"<Moment name={self.name!r}>"
 
 
 class Cantico(Base):
-    """A hymn with lyrics, optional sheet music URL and liturgical moment."""
+    """A hymn with lyrics, optional sheet music URL and liturgical moments."""
 
     __tablename__ = "canticos"
 
@@ -36,7 +45,6 @@ class Cantico(Base):
     title = Column(String(200), nullable=False, index=True)
     lyrics = Column(Text, nullable=False)
     sheet_url = Column(String(500), nullable=True)
-    moment_id = Column(Integer, ForeignKey("moments.id"), nullable=True, index=True)
     embedding = Column(LargeBinary, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(UTC))
     updated_at = Column(
@@ -45,7 +53,7 @@ class Cantico(Base):
         onupdate=lambda: datetime.now(UTC),
     )
 
-    moment = relationship("Moment", back_populates="canticos")
+    moments = relationship("Moment", secondary=cantico_moments, back_populates="canticos")
 
     def __repr__(self) -> str:
         return f"<Cantico id={self.id} title={self.title!r}>"

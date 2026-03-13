@@ -7,10 +7,10 @@ import io
 import logging
 from datetime import UTC, datetime
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import selectinload, sessionmaker
 
-from .models import Base, Cantico, Moment, Setting
+from .models import Base, Cantico, Moment, Setting, cantico_moments
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +33,35 @@ class Repository:
 
     def init_database(self, initial_password_hash: str = "") -> None:
         Base.metadata.create_all(self.engine)
+        self._migrate_v2_moments()
         self._seed_defaults(initial_password_hash)
+
+    def _migrate_v2_moments(self) -> None:
+        """Migrate from legacy single moment_id FK to cantico_moments association table."""
+        with self.engine.begin() as conn:
+            # Check if old moment_id column still exists on canticos
+            pragma = conn.execute(text("PRAGMA table_info(canticos)")).fetchall()
+            col_names = [row[1] for row in pragma]
+            if "moment_id" not in col_names:
+                return  # Already on new schema or fresh install
+
+            # Avoid re-migration if table already has data
+            existing = conn.execute(text("SELECT count(*) FROM cantico_moments")).scalar()
+            if existing:
+                return
+
+            rows = conn.execute(
+                text("SELECT id, moment_id FROM canticos WHERE moment_id IS NOT NULL")
+            ).fetchall()
+            for cantico_id, moment_id in rows:
+                conn.execute(
+                    text(
+                        "INSERT OR IGNORE INTO cantico_moments (cantico_id, moment_id) "
+                        "VALUES (:cid, :mid)"
+                    ),
+                    {"cid": cantico_id, "mid": moment_id},
+                )
+            logger.info("Migrated %d cantico moment associations to cantico_moments", len(rows))
 
     def _seed_defaults(self, initial_password_hash: str) -> None:
         with self.Session() as s:
@@ -114,16 +142,17 @@ class Repository:
             row = s.get(Moment, moment_id)
             if not row:
                 return False
-            # Unlink canticos first
-            for c in s.query(Cantico).filter(Cantico.moment_id == moment_id).all():
-                c.moment_id = None
             s.delete(row)
             s.commit()
             return True
 
     def count_canticos_for_moment(self, moment_id: int) -> int:
         with self.Session() as s:
-            return s.query(Cantico).filter(Cantico.moment_id == moment_id).count()
+            return (
+                s.query(Cantico)
+                .filter(Cantico.moments.any(Moment.id == moment_id))
+                .count()
+            )
 
     # ── Canticos ──────────────────────────────────────────────────────────────
 
@@ -131,22 +160,22 @@ class Repository:
         with self.Session() as s:
             rows = (
                 s.query(Cantico)
-                .outerjoin(Moment)
+                .options(selectinload(Cantico.moments))
                 .order_by(Cantico.title)
                 .all()
             )
-            for r in rows:
-                if r.moment:
-                    _ = r.moment.name  # eager-load
             s.expunge_all()
             return rows
 
     def get_cantico(self, cantico_id: int) -> Cantico | None:
         with self.Session() as s:
-            row = s.get(Cantico, cantico_id)
+            row = (
+                s.query(Cantico)
+                .options(selectinload(Cantico.moments))
+                .filter(Cantico.id == cantico_id)
+                .first()
+            )
             if row:
-                if row.moment:
-                    _ = row.moment.name
                 s.expunge_all()
             return row
 
@@ -155,19 +184,25 @@ class Repository:
         title: str,
         lyrics: str,
         sheet_url: str | None,
-        moment_id: int | None,
+        moment_ids: list[int] | None = None,
     ) -> Cantico:
         with self.Session() as s:
             c = Cantico(
                 title=title.strip(),
                 lyrics=lyrics.strip(),
                 sheet_url=sheet_url.strip() if sheet_url else None,
-                moment_id=moment_id,
             )
+            if moment_ids:
+                c.moments = [
+                    m for mid in moment_ids
+                    if (m := s.get(Moment, mid)) is not None
+                ]
             s.add(c)
             s.commit()
             s.refresh(c)
-            s.expunge(c)
+            # Eager-load moments before expunge
+            _ = [m.name for m in c.moments]
+            s.expunge_all()
             return c
 
     def update_cantico(
@@ -176,7 +211,7 @@ class Repository:
         title: str,
         lyrics: str,
         sheet_url: str | None,
-        moment_id: int | None,
+        moment_ids: list[int] | None = None,
     ) -> bool:
         with self.Session() as s:
             row = s.get(Cantico, cantico_id)
@@ -185,7 +220,10 @@ class Repository:
             row.title = title.strip()
             row.lyrics = lyrics.strip()
             row.sheet_url = sheet_url.strip() if sheet_url else None
-            row.moment_id = moment_id
+            row.moments = [
+                m for mid in (moment_ids or [])
+                if (m := s.get(Moment, mid)) is not None
+            ]
             row.updated_at = datetime.now(UTC)
             row.embedding = None  # invalidate — caller must re-embed
             s.commit()
@@ -207,17 +245,18 @@ class Repository:
                 row.embedding = embedding_blob
                 s.commit()
 
-    def get_all_for_search(self) -> list[tuple[int, str, str | None, int | None, bytes | None]]:
-        """Return (id, title, sheet_url, moment_id, embedding_blob) for every cantico."""
+    def get_all_for_search(self) -> list[tuple[int, str, str | None, list[int], bytes | None]]:
+        """Return (id, title, sheet_url, moment_ids, embedding_blob) for every cantico."""
         with self.Session() as s:
-            rows = s.query(
-                Cantico.id,
-                Cantico.title,
-                Cantico.sheet_url,
-                Cantico.moment_id,
-                Cantico.embedding,
-            ).all()
-            return list(rows)
+            rows = (
+                s.query(Cantico)
+                .options(selectinload(Cantico.moments))
+                .all()
+            )
+            return [
+                (c.id, c.title, c.sheet_url, [m.id for m in c.moments], c.embedding)
+                for c in rows
+            ]
 
     def count_canticos(self) -> int:
         with self.Session() as s:
@@ -238,11 +277,15 @@ class Repository:
         Import hymns from CSV text.
 
         Expected columns: title, lyrics, sheet_url (opt), moment (opt)
+        The moment column can contain multiple moment names separated by '|'.
+        Auto-detects tab or comma delimiter from the header row.
         Returns {"imported": N, "errors": [{"row": N, "error": "..."}]}
         """
         imported = 0
         errors = []
-        reader = csv.DictReader(io.StringIO(content))
+        first_line = content.split("\n")[0]
+        delimiter = "\t" if "\t" in first_line else ","
+        reader = csv.DictReader(io.StringIO(content), delimiter=delimiter)
 
         for i, row in enumerate(reader, start=2):  # row 1 = header
             title = (row.get("title") or "").strip()
@@ -253,19 +296,24 @@ class Repository:
                 continue
 
             sheet_url = (row.get("sheet_url") or "").strip() or None
-            moment_name = (row.get("moment") or "").strip()
-            moment_id = None
 
-            if moment_name:
+            # Support multiple moment names separated by '|'
+            moment_names = [
+                n.strip()
+                for n in (row.get("moment") or "").split("|")
+                if n.strip()
+            ]
+            moment_ids: list[int] = []
+            for moment_name in moment_names:
                 m = self.get_moment_by_name(moment_name)
                 if not m:
                     m = self.create_moment(moment_name)
-                moment_id = m.id
+                moment_ids.append(m.id)
 
             # Replace escaped \n with actual newlines
             lyrics = lyrics.replace("\\n", "\n")
 
-            self.create_cantico(title, lyrics, sheet_url, moment_id)
+            self.create_cantico(title, lyrics, sheet_url, moment_ids or None)
             imported += 1
 
         return {"imported": imported, "errors": errors}

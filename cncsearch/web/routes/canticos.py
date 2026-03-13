@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 
-from fastapi import APIRouter, Form, Request, UploadFile
+from fastapi import APIRouter, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
@@ -41,29 +41,39 @@ async def new_cantico_form(request: Request):
 
 
 @router.post("/new")
-async def create_cantico(
-    request: Request,
-    title: str = Form(...),
-    lyrics: str = Form(...),
-    sheet_url: str = Form(""),
-    moment_id: str = Form(""),
-):
+async def create_cantico(request: Request):
     if r := require_login(request):
         return r
 
     repo = request.app.state.repo
     search = request.app.state.search
 
-    mid = int(moment_id) if moment_id else None
-    if mid is not None and not repo.get_moment(mid):
+    form = await request.form()
+    title = (form.get("title") or "").strip()
+    lyrics = (form.get("lyrics") or "").strip()
+    sheet_url = (form.get("sheet_url") or "").strip() or None
+    moment_ids = _parse_moment_ids(form.getlist("moment_id"))
+
+    if not title or not lyrics:
         moments = repo.get_moments()
         return templates.TemplateResponse(
             "canticos/form.html",
-            {"request": request, "cantico": None, "moments": moments, "error": "Momento litúrgico inválido."},
+            {"request": request, "cantico": None, "moments": moments,
+             "error": "Título e letra são obrigatórios."},
             status_code=400,
         )
 
-    cantico = repo.create_cantico(title, lyrics, sheet_url or None, mid)
+    for mid in moment_ids:
+        if not repo.get_moment(mid):
+            moments = repo.get_moments()
+            return templates.TemplateResponse(
+                "canticos/form.html",
+                {"request": request, "cantico": None, "moments": moments,
+                 "error": "Momento litúrgico inválido."},
+                status_code=400,
+            )
+
+    cantico = repo.create_cantico(title, lyrics, sheet_url, moment_ids or None)
 
     try:
         await asyncio.to_thread(search.embed_and_store, cantico.id, title, lyrics)
@@ -135,31 +145,41 @@ async def edit_cantico_form(request: Request, cantico_id: int):
 
 
 @router.post("/{cantico_id}/edit")
-async def update_cantico(
-    request: Request,
-    cantico_id: int,
-    title: str = Form(...),
-    lyrics: str = Form(...),
-    sheet_url: str = Form(""),
-    moment_id: str = Form(""),
-):
+async def update_cantico(request: Request, cantico_id: int):
     if r := require_login(request):
         return r
 
     repo = request.app.state.repo
     search = request.app.state.search
 
-    mid = int(moment_id) if moment_id else None
-    if mid is not None and not repo.get_moment(mid):
+    form = await request.form()
+    title = (form.get("title") or "").strip()
+    lyrics = (form.get("lyrics") or "").strip()
+    sheet_url = (form.get("sheet_url") or "").strip() or None
+    moment_ids = _parse_moment_ids(form.getlist("moment_id"))
+
+    if not title or not lyrics:
         cantico = repo.get_cantico(cantico_id)
         moments = repo.get_moments()
         return templates.TemplateResponse(
             "canticos/form.html",
-            {"request": request, "cantico": cantico, "moments": moments, "error": "Momento litúrgico inválido."},
+            {"request": request, "cantico": cantico, "moments": moments,
+             "error": "Título e letra são obrigatórios."},
             status_code=400,
         )
 
-    updated = repo.update_cantico(cantico_id, title, lyrics, sheet_url or None, mid)
+    for mid in moment_ids:
+        if not repo.get_moment(mid):
+            cantico = repo.get_cantico(cantico_id)
+            moments = repo.get_moments()
+            return templates.TemplateResponse(
+                "canticos/form.html",
+                {"request": request, "cantico": cantico, "moments": moments,
+                 "error": "Momento litúrgico inválido."},
+                status_code=400,
+            )
+
+    updated = repo.update_cantico(cantico_id, title, lyrics, sheet_url, moment_ids or None)
     if not updated:
         return RedirectResponse("/canticos?error=Cântico+não+encontrado", status_code=302)
 
@@ -181,3 +201,15 @@ async def delete_cantico(request: Request, cantico_id: int):
         return r
     request.app.state.repo.delete_cantico(cantico_id)
     return RedirectResponse("/canticos?success=Cântico+eliminado", status_code=303)
+
+
+# ── Helpers ───────────────────────────────────────────────────────────────────
+
+def _parse_moment_ids(raw: list) -> list[int]:
+    """Convert multi-select form values to valid int IDs, ignoring blanks."""
+    result = []
+    for v in raw:
+        v = str(v).strip()
+        if v.isdigit():
+            result.append(int(v))
+    return result
