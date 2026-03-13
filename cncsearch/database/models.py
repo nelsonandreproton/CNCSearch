@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, LargeBinary, String, Table, Text
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, LargeBinary, String, Table, Text, text as sa_text
 from sqlalchemy.orm import DeclarativeBase, relationship
 
 
@@ -45,6 +45,7 @@ class Cantico(Base):
     title = Column(String(200), nullable=False, index=True)
     lyrics = Column(Text, nullable=False)
     sheet_url = Column(String(500), nullable=True)
+    source = Column(String(50), nullable=False, server_default="caminho")
     embedding = Column(LargeBinary, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(UTC))
     updated_at = Column(

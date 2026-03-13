@@ -29,6 +29,7 @@ async def search_page(request: Request):
             "results": None,
             "query": "",
             "settings": settings,
+            "selected_source": "",
             "error": "",
         },
     )
@@ -40,6 +41,7 @@ async def search_submit(
     query: str = Form(...),
     top_n: str = Form(""),
     moment_id: str = Form(""),
+    source: str = Form(""),
 ):
     if r := require_login(request):
         return r
@@ -53,10 +55,12 @@ async def search_submit(
     n = max(1, min(20, raw_n))
     min_sim = float(settings.get("min_similarity", "0.40"))
     mid = int(moment_id) if moment_id.strip().isdigit() else None
+    src = source.strip() or None
 
     try:
-        results = await asyncio.to_thread(search.search, query.strip(), n, min_sim, mid)
-        # Attach moment names to each result
+        results = await asyncio.to_thread(
+            search.search, query.strip(), n, min_sim, mid, None, src
+        )
         moment_map = {m.id: m.name for m in moments}
         for r in results:
             names = [moment_map[mid] for mid in r.get("moment_ids", []) if mid in moment_map]
@@ -74,6 +78,7 @@ async def search_submit(
             "results": results,
             "query": query,
             "settings": settings,
+            "selected_source": src or "",
             "error": error,
         },
     )

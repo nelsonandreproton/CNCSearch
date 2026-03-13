@@ -34,6 +34,7 @@ class Repository:
     def init_database(self, initial_password_hash: str = "") -> None:
         Base.metadata.create_all(self.engine)
         self._migrate_v2_moments()
+        self._migrate_v3_source()
         self._seed_defaults(initial_password_hash)
 
     def _migrate_v2_moments(self) -> None:
@@ -62,6 +63,15 @@ class Repository:
                     {"cid": cantico_id, "mid": moment_id},
                 )
             logger.info("Migrated %d cantico moment associations to cantico_moments", len(rows))
+
+    def _migrate_v3_source(self) -> None:
+        """Add source column to canticos if it doesn't exist yet."""
+        with self.engine.begin() as conn:
+            pragma = conn.execute(text("PRAGMA table_info(canticos)")).fetchall()
+            col_names = [row[1] for row in pragma]
+            if "source" not in col_names:
+                conn.execute(text("ALTER TABLE canticos ADD COLUMN source TEXT NOT NULL DEFAULT 'caminho'"))
+                logger.info("Migrated canticos table: added source column (default='caminho')")
 
     def _seed_defaults(self, initial_password_hash: str) -> None:
         with self.Session() as s:
@@ -156,21 +166,26 @@ class Repository:
 
     # ── Canticos ──────────────────────────────────────────────────────────────
 
-    def get_cantico_by_title(self, title: str) -> Cantico | None:
+    def get_cantico_by_title(self, title: str, source: str | None = None) -> Cantico | None:
         with self.Session() as s:
-            row = s.query(Cantico).filter(Cantico.title.ilike(title)).first()
+            q = s.query(Cantico).filter(Cantico.title.ilike(title))
+            if source is not None:
+                q = q.filter(Cantico.source == source)
+            row = q.first()
             if row:
                 s.expunge(row)
             return row
 
-    def get_canticos(self) -> list[Cantico]:
+    def get_canticos(self, source: str | None = None) -> list[Cantico]:
         with self.Session() as s:
-            rows = (
+            q = (
                 s.query(Cantico)
                 .options(selectinload(Cantico.moments))
                 .order_by(Cantico.title)
-                .all()
             )
+            if source is not None:
+                q = q.filter(Cantico.source == source)
+            rows = q.all()
             s.expunge_all()
             return rows
 
@@ -192,12 +207,14 @@ class Repository:
         lyrics: str,
         sheet_url: str | None,
         moment_ids: list[int] | None = None,
+        source: str = "caminho",
     ) -> Cantico:
         with self.Session() as s:
             c = Cantico(
                 title=title.strip(),
                 lyrics=lyrics.strip(),
                 sheet_url=sheet_url.strip() if sheet_url else None,
+                source=source,
             )
             if moment_ids:
                 c.moments = [
@@ -252,14 +269,18 @@ class Repository:
                 row.embedding = embedding_blob
                 s.commit()
 
-    def get_all_for_search(self) -> list[tuple[int, str, str | None, list[int], bytes | None]]:
-        """Return (id, title, sheet_url, moment_ids, embedding_blob) for every cantico."""
+    def get_all_for_search(
+        self, source: str | None = None
+    ) -> list[tuple[int, str, str | None, list[int], bytes | None]]:
+        """Return (id, title, sheet_url, moment_ids, embedding_blob) for canticos.
+
+        If source is provided, only return canticos with that source value.
+        """
         with self.Session() as s:
-            rows = (
-                s.query(Cantico)
-                .options(selectinload(Cantico.moments))
-                .all()
-            )
+            q = s.query(Cantico).options(selectinload(Cantico.moments))
+            if source is not None:
+                q = q.filter(Cantico.source == source)
+            rows = q.all()
             return [
                 (c.id, c.title, c.sheet_url, [m.id for m in c.moments], c.embedding)
                 for c in rows

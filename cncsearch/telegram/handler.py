@@ -1,4 +1,4 @@
-"""Telegram /canticos command handler.
+"""Telegram /canticos and /canticos_paroquia command handlers.
 
 Usage in GarminBot's main.py (after app = tg_bot.build_application()):
 
@@ -11,7 +11,7 @@ Usage in GarminBot's main.py (after app = tg_bot.build_application()):
         jina_api_key=os.environ.get("CNCSEARCH_JINA_API_KEY"),
     )
 
-Command syntax:
+Command syntax (both /canticos and /canticos_paroquia):
     /canticos texto bíblico
     /canticos 5 texto bíblico
     /canticos -m comunhão texto bíblico
@@ -58,13 +58,13 @@ def _make_handler(
     db_path: str,
     embedding_provider: str,
     jina_api_key: str | None,
+    source: str,
 ) -> Callable:
-    """Factory: creates the /canticos handler closed over its dependencies."""
+    """Factory: creates a search handler scoped to a given source."""
     from ..config import Config
     from ..database.repository import Repository
     from ..search.service import SearchService
 
-    # Ensure parent directory exists
     os.makedirs(os.path.dirname(os.path.abspath(db_path)), exist_ok=True)
 
     config = Config(
@@ -79,7 +79,10 @@ def _make_handler(
     repo.init_database()
     search = SearchService(config, repo)
 
-    async def canticos_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    source_label = "Paróquia" if source == "paroquia" else "Caminho"
+    command_name = "canticos_paroquia" if source == "paroquia" else "canticos"
+
+    async def _handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         if not update.message:
             return
 
@@ -88,16 +91,14 @@ def _make_handler(
 
         if not query_text:
             await update.message.reply_text(
-                "Uso: /canticos [N] [-m momento] texto bíblico\n"
-                "Exemplo: /canticos 3 -m Comunhão João 3:16"
+                f"Uso: /{command_name} [N] [-m momento] texto bíblico\n"
+                f"Exemplo: /{command_name} 3 João 3:16"
             )
             return
 
-        # Resolve settings
         top_n = n if n is not None else int(repo.get_setting("top_n", "3"))
         min_sim = float(repo.get_setting("min_similarity", "0.40"))
 
-        # Resolve moment
         moment_id: int | None = None
         if moment_name:
             moment = repo.get_moment_by_name(moment_name)
@@ -110,16 +111,16 @@ def _make_handler(
                 return
             moment_id = moment.id
 
-        # Expand biblical references once (reused for both display and embedding)
+        # Expand biblical references once (reused for display and embedding)
         from ..bible.lookup import expand_query
         expanded = await asyncio.to_thread(expand_query, query_text)
         verse_text = expanded[len(query_text):].strip() if expanded != query_text else None
 
-        # Run search in thread (may call Jina API or local model)
         try:
             results = await asyncio.to_thread(
                 search.search, query_text, top_n, min_sim, moment_id,
-                expanded,  # pass pre-expanded query to avoid double API call
+                expanded,   # pre-expanded to avoid double API call
+                source,
             )
         except Exception as exc:
             logger.error("Search failed: %s", exc, exc_info=True)
@@ -135,12 +136,11 @@ def _make_handler(
             )
             return
 
-        # Build response
         moment_cache: dict[int, str] = {}
-        lines = [f"🎵 <b>Cânticos para:</b> <i>{query_text}</i>"]
+        lines = [f"🎵 <b>Cânticos {source_label} para:</b> <i>{query_text}</i>"]
         if verse_text:
             lines.append(f"<blockquote>{verse_text}</blockquote>")
-        lines.append("")  # blank line before results
+        lines.append("")
         for i, r in enumerate(results, 1):
             moment_names = []
             for mid in r.get("moment_ids", []):
@@ -159,7 +159,7 @@ def _make_handler(
 
         await update.message.reply_text("\n".join(lines), parse_mode="HTML")
 
-    return canticos_command
+    return _handler
 
 
 def register_canticos_handler(
@@ -168,7 +168,10 @@ def register_canticos_handler(
     embedding_provider: str = "jina",
     jina_api_key: str | None = None,
 ) -> None:
-    """Register the /canticos command on an existing Application instance."""
-    handler_fn = _make_handler(db_path, embedding_provider, jina_api_key)
-    app.add_handler(CommandHandler("canticos", handler_fn))
-    logger.info("CNCSearch /canticos handler registered (db=%s)", db_path)
+    """Register /canticos (Caminho) and /canticos_paroquia on an existing Application."""
+    caminho_fn = _make_handler(db_path, embedding_provider, jina_api_key, source="caminho")
+    paroquia_fn = _make_handler(db_path, embedding_provider, jina_api_key, source="paroquia")
+
+    app.add_handler(CommandHandler("canticos", caminho_fn))
+    app.add_handler(CommandHandler("canticos_paroquia", paroquia_fn))
+    logger.info("CNCSearch /canticos + /canticos_paroquia handlers registered (db=%s)", db_path)

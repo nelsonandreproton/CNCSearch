@@ -22,7 +22,15 @@
           <input type="number" name="top_n" class="form-control"
                  min="1" max="20" placeholder="{{ settings.top_n }}">
         </div>
-        <div class="col-sm-8">
+        <div class="col-sm-4">
+          <label class="form-label fw-medium">Fonte</label>
+          <select name="source" class="form-select">
+            <option value="" {% if not selected_source %}selected{% endif %}>— Caminho + Paróquia —</option>
+            <option value="caminho" {% if selected_source == 'caminho' %}selected{% endif %}>Caminho Neocatecumenal</option>
+            <option value="paroquia" {% if selected_source == 'paroquia' %}selected{% endif %}>Paróquia</option>
+          </select>
+        </div>
+        <div class="col-sm-4">
           <label class="form-label fw-medium">Momento (opcional)</label>
           <select name="moment_id" class="form-select">
             <option value="">— todos os momentos —</option>

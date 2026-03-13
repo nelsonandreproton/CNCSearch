@@ -13,6 +13,23 @@
   </div>
 </div>
 
+{# Source filter tabs #}
+<ul class="nav nav-tabs mb-3">
+  <li class="nav-item">
+    <a class="nav-link {% if not source_filter %}active{% endif %}" href="/canticos">Todos</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {% if source_filter == 'caminho' %}active{% endif %}" href="/canticos?source=caminho">
+      <span class="badge bg-primary me-1">Caminho</span>
+    </a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {% if source_filter == 'paroquia' %}active{% endif %}" href="/canticos?source=paroquia">
+      <span class="badge bg-success me-1">Paróquia</span>
+    </a>
+  </li>
+</ul>
+
 {% if success %}
 <div class="alert alert-success alert-dismissible py-2 small">
   {{ success }}<button type="button" class="btn-close btn-sm" data-bs-dismiss="alert"></button>
@@ -31,6 +48,7 @@
       <thead class="table-light">
         <tr>
           <th>Título</th>
+          <th>Fonte</th>
           <th>Momento</th>
           <th>Pauta</th>
           <th class="text-end">Acções</th>
@@ -40,6 +58,13 @@
         {% for c in canticos %}
         <tr>
           <td class="fw-medium">{{ c.title }}</td>
+          <td>
+            {% if c.source == 'paroquia' %}
+            <span class="badge bg-success">Paróquia</span>
+            {% else %}
+            <span class="badge bg-primary">Caminho</span>
+            {% endif %}
+          </td>
           <td>
             {% if c.moments %}
             {% for m in c.moments %}

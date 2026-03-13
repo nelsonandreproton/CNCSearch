@@ -19,13 +19,20 @@ _CSV_MAX_BYTES = 5 * 1024 * 1024  # 5 MB
 
 
 @router.get("", response_class=HTMLResponse)
-async def list_canticos(request: Request, success: str = "", error: str = ""):
+async def list_canticos(request: Request, success: str = "", error: str = "", source: str = ""):
     if r := require_login(request):
         return r
-    canticos = request.app.state.repo.get_canticos()
+    src = source.strip() or None
+    canticos = request.app.state.repo.get_canticos(source=src)
     return templates.TemplateResponse(
         "canticos/list.html",
-        {"request": request, "canticos": canticos, "success": success, "error": error},
+        {
+            "request": request,
+            "canticos": canticos,
+            "source_filter": src or "",
+            "success": success,
+            "error": error,
+        },
     )
 
 
