@@ -43,7 +43,8 @@
       "Read(//c/Users/NelsonAndré/AppData/Roaming/Claude/local-agent-mode-sessions/skills-plugin/becce489-513d-4732-b7da-5fe638dd8bbe/3856cdc5-fc22-4a4a-9761-406759287234/skills/docx/**)",
       "Bash(pandoc \"C:\\\\Users\\\\NelsonAndré\\\\Desktop\\\\livro cânticos novo 5.docx\" -o output.md)",
       "Bash(python scripts/paroquia_import.py \"C:\\\\Users\\\\NelsonAndré\\\\Desktop\\\\livro cânticos novo 5.docx\" --dry-run)",
-      "Bash(python scripts/paroquia_import.py \"C:\\\\Users\\\\NelsonAndré\\\\Desktop\\\\livro cânticos novo 5.docx\")"
+      "Bash(python scripts/paroquia_import.py \"C:\\\\Users\\\\NelsonAndré\\\\Desktop\\\\livro cânticos novo 5.docx\")",
+      "Bash(docker exec:*)"
     ]
   }
 }
