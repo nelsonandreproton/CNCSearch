@@ -10,6 +10,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY cncsearch/ ./cncsearch/
 COPY templates/ ./templates/
 COPY static/ ./static/
+COPY scripts/ ./scripts/
 
 ENV DATABASE_PATH=/data/cncsearch.db
 ENV PYTHONUNBUFFERED=1
