@@ -278,13 +278,18 @@ class Repository:
 
         Expected columns: title, lyrics, sheet_url (opt), moment (opt)
         The moment column can contain multiple moment names separated by '|'.
-        Auto-detects tab or comma delimiter from the header row.
+        Auto-detects tab, semicolon, or comma delimiter from the header row.
         Returns {"imported": N, "errors": [{"row": N, "error": "..."}]}
         """
         imported = 0
         errors = []
         first_line = content.split("\n")[0]
-        delimiter = "\t" if "\t" in first_line else ","
+        if "\t" in first_line:
+            delimiter = "\t"
+        elif ";" in first_line:
+            delimiter = ";"
+        else:
+            delimiter = ","
         reader = csv.DictReader(io.StringIO(content), delimiter=delimiter)
 
         for i, row in enumerate(reader, start=2):  # row 1 = header
