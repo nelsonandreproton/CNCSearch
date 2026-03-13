@@ -110,10 +110,16 @@ def _make_handler(
                 return
             moment_id = moment.id
 
+        # Expand biblical references once (reused for both display and embedding)
+        from ..bible.lookup import expand_query
+        expanded = await asyncio.to_thread(expand_query, query_text)
+        verse_text = expanded[len(query_text):].strip() if expanded != query_text else None
+
         # Run search in thread (may call Jina API or local model)
         try:
             results = await asyncio.to_thread(
-                search.search, query_text, top_n, min_sim, moment_id
+                search.search, query_text, top_n, min_sim, moment_id,
+                expanded,  # pass pre-expanded query to avoid double API call
             )
         except Exception as exc:
             logger.error("Search failed: %s", exc, exc_info=True)
@@ -131,7 +137,10 @@ def _make_handler(
 
         # Build response
         moment_cache: dict[int, str] = {}
-        lines = [f"🎵 <b>Cânticos para:</b> <i>{query_text}</i>\n"]
+        lines = [f"🎵 <b>Cânticos para:</b> <i>{query_text}</i>"]
+        if verse_text:
+            lines.append(f"<blockquote>{verse_text}</blockquote>")
+        lines.append("")  # blank line before results
         for i, r in enumerate(results, 1):
             moment_names = []
             for mid in r.get("moment_ids", []):

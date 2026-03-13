@@ -50,15 +50,18 @@ class SearchService:
         top_n: int,
         min_similarity: float,
         moment_id: int | None = None,
+        expanded_query: str | None = None,
     ) -> list[dict]:
         """
         Return top_n canticos most similar to query, above min_similarity.
 
         Each result: {id, title, sheet_url, moment_ids, similarity (0-1)}
         moment_id filter: only include canticos that have this moment in their list.
+        expanded_query: pre-expanded query (e.g. with verse text); if None, expand internally.
         """
         from ..bible.lookup import expand_query
-        query_emb = self._embed([expand_query(query)])[0]
+        effective = expanded_query if expanded_query is not None else expand_query(query)
+        query_emb = self._embed([effective])[0]
         rows = self.repo.get_all_for_search()
 
         results = []
