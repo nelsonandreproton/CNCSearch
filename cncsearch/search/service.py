@@ -57,7 +57,8 @@ class SearchService:
         Each result: {id, title, sheet_url, moment_ids, similarity (0-1)}
         moment_id filter: only include canticos that have this moment in their list.
         """
-        query_emb = self._embed([query])[0]
+        from ..bible.lookup import expand_query
+        query_emb = self._embed([expand_query(query)])[0]
         rows = self.repo.get_all_for_search()
 
         results = []
