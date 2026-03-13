@@ -30,26 +30,32 @@ services:
     depends_on:
       - cncsearch
 
-  # ── GarminBot (extended with CNCSearch handler) ─────────────────────────────
-  # This service mounts CNCSearch source into GarminBot's container so
-  # the /canticos handler can be imported. GarminBot's main.py needs
-  # 3 lines added — see README for instructions.
+  # ── GarminBot (extended with CNCSearch + HetznerCheck handlers) ─────────────
+  # Mounts CNCSearch source (/canticos) and HetznerCheck source (/server_status).
+  # Uses pid:host and host volumes so HetznerCheck collectors see real host metrics.
   garminbot:
     build:
       context: ../GarminBot
       dockerfile: Dockerfile
     container_name: garminbot
     restart: unless-stopped
+    pid: "host"             # see real host processes (accurate process/zombie count)
+    network_mode: "host"    # see real host network stats; GarminBot only needs internet
     env_file: ../GarminBot/.env
     environment:
-      PYTHONPATH: /cncsearch
+      PYTHONPATH: /cncsearch:/hetznercheck
       CNCSEARCH_DATABASE_PATH: /cncsearch_data/cncsearch.db
       CNCSEARCH_EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-jina}
       CNCSEARCH_JINA_API_KEY: ${JINA_API_KEY}
+      HETZNERCHECK_CONFIG_PATH: /hetznercheck/config.yml
     volumes:
       - garminbot_data:/app/data
       - cncsearch_data:/cncsearch_data          # shared DB with cncsearch
       - .:/cncsearch:ro                          # mount CNCSearch source (read-only)
+      - ../HetznerCheck:/hetznercheck:ro         # mount HetznerCheck source (read-only)
+      - /:/rootfs:ro                             # host filesystem for disk stats
+      - /var/log:/var/log:ro                     # auth.log for SSH failure count
+      - /var/run/docker.sock:/var/run/docker.sock:ro  # Docker API for container list
 
 volumes:
   cncsearch_data:
