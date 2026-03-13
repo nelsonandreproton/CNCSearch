@@ -156,6 +156,13 @@ class Repository:
 
     # ── Canticos ──────────────────────────────────────────────────────────────
 
+    def get_cantico_by_title(self, title: str) -> Cantico | None:
+        with self.Session() as s:
+            row = s.query(Cantico).filter(Cantico.title.ilike(title)).first()
+            if row:
+                s.expunge(row)
+            return row
+
     def get_canticos(self) -> list[Cantico]:
         with self.Session() as s:
             rows = (
@@ -314,6 +321,11 @@ class Repository:
                 if not m:
                     m = self.create_moment(moment_name)
                 moment_ids.append(m.id)
+
+            # Skip duplicates (case-insensitive title match)
+            if self.get_cantico_by_title(title):
+                errors.append({"row": i, "error": f"já existe um cântico com o título '{title}'"})
+                continue
 
             # Replace escaped \n with actual newlines
             lyrics = lyrics.replace("\\n", "\n")
