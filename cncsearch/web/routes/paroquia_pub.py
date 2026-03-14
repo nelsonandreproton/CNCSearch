@@ -42,7 +42,6 @@ async def paroquia_index(request: Request):
         songs.append({"cantico": c, "norm_first": norm, "seq": i + 1})
 
     az_letters = sorted(letters_seen)
-    adsense_client_id = request.app.state.config.adsense_client_id
 
     return templates.TemplateResponse(
         "paroquia/index.html",
@@ -51,7 +50,6 @@ async def paroquia_index(request: Request):
             "songs": songs,
             "az_letters": az_letters,
             "total": len(songs),
-            "adsense_client_id": adsense_client_id,
         },
     )
 
@@ -64,14 +62,12 @@ async def paroquia_song(request: Request, cantico_id: int):
         return RedirectResponse("/paroquia", status_code=302)
 
     neighbors = request.app.state.repo.get_paroquia_neighbors(cantico_id)
-    adsense_client_id = request.app.state.config.adsense_client_id
 
     return templates.TemplateResponse(
         "paroquia/song.html",
         {
             "request": request,
             "cantico": cantico,
-            "adsense_client_id": adsense_client_id,
             **neighbors,
         },
     )
