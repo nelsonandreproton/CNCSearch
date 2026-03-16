@@ -18,7 +18,7 @@ git fetch origin
 git reset --hard origin/main
 
 echo "[2/3] Rebuilding and restarting cncsearch + caddy..."
-docker compose -f "$COMPOSE_FILE" up -d --build cncsearch caddy
+docker compose -f "$COMPOSE_FILE" up -d --build --force-recreate cncsearch caddy
 
 echo "[3/3] Showing logs (Ctrl+C to stop watching)..."
 docker compose -f "$COMPOSE_FILE" logs -f --tail=30 cncsearch caddy
