@@ -216,6 +216,7 @@
     <h1 class="song-title">{{ cantico.title }}</h1>
     <div class="song-num-badge">Cântico {{ position }} de {{ total }}</div>
   </div>
+<center style="margin-top:10px;">
 <script>
   atOptions = {
     'key' : '2b841f9a1aa2ae4133ee8cd038b8c7dc',
@@ -226,6 +227,7 @@
   };
 </script>
 <script src="https://www.highperformanceformat.com/2b841f9a1aa2ae4133ee8cd038b8c7dc/invoke.js"></script>
+</center>
   <!-- ── Lyrics ── -->
   <div class="lyrics-wrap" id="lyricsWrap">
     {% for stanza in cantico.lyrics.split('\n\n') %}
