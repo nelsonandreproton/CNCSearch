@@ -20,7 +20,8 @@ canticos.paroquiacasaldecambra.pt {
     }
 
     # Service worker Monetag
-    handle /sw.js {
+    @sw path /sw.js
+    handle @sw {
         reverse_proxy cncsearch:8080
     }
 
