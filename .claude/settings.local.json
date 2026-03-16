@@ -44,7 +44,14 @@
       "Bash(pandoc \"C:\\\\Users\\\\NelsonAndré\\\\Desktop\\\\livro cânticos novo 5.docx\" -o output.md)",
       "Bash(python scripts/paroquia_import.py \"C:\\\\Users\\\\NelsonAndré\\\\Desktop\\\\livro cânticos novo 5.docx\" --dry-run)",
       "Bash(python scripts/paroquia_import.py \"C:\\\\Users\\\\NelsonAndré\\\\Desktop\\\\livro cânticos novo 5.docx\")",
-      "Bash(docker exec:*)"
+      "Bash(docker exec:*)",
+      "WebFetch(domain:www.paroquiacasaldecambra.pt)",
+      "Bash(python -c \"from cncsearch.web.app import create_app; app = create_app\\(\\); print\\(''OK — routes:'', [r.path for r in app.routes if hasattr\\(r,''path''\\)]\\)\")",
+      "Bash(python -m py_compile cncsearch/config.py cncsearch/database/repository.py cncsearch/web/routes/paroquia_pub.py cncsearch/web/app.py)",
+      "Bash(python -m py_compile cncsearch/config.py)",
+      "Bash(xargs grep:*)",
+      "Bash(git log:*)",
+      "Bash(sqlite3 data/garmin_data.db \"SELECT name FROM sqlite_master WHERE type=''table'';\")"
     ]
   }
 }
