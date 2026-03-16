@@ -216,7 +216,16 @@
     <h1 class="song-title">{{ cantico.title }}</h1>
     <div class="song-num-badge">Cântico {{ position }} de {{ total }}</div>
   </div>
-
+<script>
+  atOptions = {
+    'key' : '2b841f9a1aa2ae4133ee8cd038b8c7dc',
+    'format' : 'iframe',
+    'height' : 90,
+    'width' : 728,
+    'params' : {}
+  };
+</script>
+<script src="https://www.highperformanceformat.com/2b841f9a1aa2ae4133ee8cd038b8c7dc/invoke.js"></script>
   <!-- ── Lyrics ── -->
   <div class="lyrics-wrap" id="lyricsWrap">
     {% for stanza in cantico.lyrics.split('\n\n') %}
