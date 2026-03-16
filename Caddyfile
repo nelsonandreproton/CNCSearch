@@ -19,6 +19,11 @@ canticos.paroquiacasaldecambra.pt {
         reverse_proxy cncsearch:8080
     }
 
+    # Service worker Monetag
+    handle /sw.js {
+        reverse_proxy cncsearch:8080
+    }
+
     # Qualquer outra rota → redireciona para o directório (não expõe admin)
     handle {
         redir * /paroquia permanent

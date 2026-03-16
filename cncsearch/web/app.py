@@ -7,6 +7,7 @@ import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, Response
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
 
@@ -71,6 +72,10 @@ def create_app() -> FastAPI:
     app.include_router(settings.router)
     app.include_router(search.router)
     app.include_router(paroquia_pub.router)  # public — no auth
+
+    @app.get("/sw.js", include_in_schema=False)
+    async def service_worker():
+        return FileResponse("static/sw.js", media_type="application/javascript")
 
     # Root redirect
     from fastapi.responses import RedirectResponse
