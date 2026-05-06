@@ -3,7 +3,15 @@
 # Let's Encrypt certificate is obtained automatically.
 
 {$CADDY_HOST} {
-    reverse_proxy cncsearch:8080
+    # PTSquawk API — strip prefix so Flask sees /health and /history
+    handle_path /ptsquawk/* {
+        reverse_proxy ptsquawk:5000
+    }
+
+    # Everything else → CNCSearch
+    handle {
+        reverse_proxy cncsearch:8080
+    }
 }
 
 # ── Cânticos públicos da Paróquia ────────────────────────────────────────────
