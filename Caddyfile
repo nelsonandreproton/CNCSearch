@@ -8,6 +8,11 @@
         reverse_proxy ptsquawk:5000
     }
 
+    # PTEvents dashboard — preserve /ptevents prefix (aiohttp routes on it)
+    handle /ptevents* {
+        reverse_proxy ptevents:8080
+    }
+
     # Everything else → CNCSearch
     handle {
         reverse_proxy cncsearch:8080
