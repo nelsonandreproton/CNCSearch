@@ -10,7 +10,7 @@
 
     # PTEvents dashboard — preserve /ptevents prefix (aiohttp routes on it)
     handle /ptevents* {
-        reverse_proxy ptevents:8085
+        reverse_proxy ptevents:8080
     }
 
     # Everything else → CNCSearch
