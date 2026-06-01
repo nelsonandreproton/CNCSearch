@@ -44,3 +44,10 @@ canticos.paroquiacasaldecambra.pt {
         redir * /paroquia permanent
     }
 }
+
+# ── GitLab MCP gateway for Notion ────────────────────────────────────────────
+# Notion URL: https://gitlab-mcp.<ip-with-dashes>.sslip.io/mcp?token=GITLAB_PAT
+# Token is passed in the query string (Notion auth = None).
+gitlab-mcp.{$CADDY_HOST} {
+    reverse_proxy gitlab-mcp-gateway:8808
+}
