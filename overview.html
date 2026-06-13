@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CNCSearch — Overview</title>
+  <style>
+    :root{--bg:#0f1117;--surface:#1a1d27;--surface2:#222636;--border:#2e3347;--accent:#6c8aff;--accent2:#a78bfa;--green:#34d399;--yellow:#fbbf24;--red:#f87171;--orange:#fb923c;--cyan:#22d3ee;--text:#e2e8f0;--muted:#8892a4;--radius:10px;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.6;}
+    a{color:var(--accent);text-decoration:none;}
+    .page{max-width:1100px;margin:0 auto;padding:40px 24px 80px;}
+    header{text-align:center;padding:48px 0 36px;border-bottom:1px solid var(--border);margin-bottom:48px;}
+    header h1{font-size:2.4rem;font-weight:700;}header h1 span{color:var(--accent);}
+    header p{color:var(--muted);margin-top:10px;font-size:1.05rem;}
+    .badge{display:inline-block;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:3px 14px;font-size:0.8rem;color:var(--muted);margin:8px 4px 0;}
+    .badge.green{border-color:var(--green);color:var(--green);}.badge.blue{border-color:var(--accent);color:var(--accent);}.badge.purple{border-color:var(--accent2);color:var(--accent2);}.badge.orange{border-color:var(--orange);color:var(--orange);}.badge.cyan{border-color:var(--cyan);color:var(--cyan);}
+    h2{font-size:1.35rem;font-weight:600;color:var(--accent);margin-bottom:20px;display:flex;align-items:center;gap:10px;}
+    h2::after{content:'';flex:1;height:1px;background:var(--border);}
+    h3{font-size:1rem;font-weight:600;margin-bottom:8px;}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;}
+    .card+.card{margin-top:16px;}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+    .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+    @media(max-width:720px){.grid-2,.grid-3{grid-template-columns:1fr;}}
+    .flow{display:flex;align-items:center;gap:0;flex-wrap:wrap;margin-bottom:8px;}
+    .flow-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:0.83rem;text-align:center;min-width:100px;}
+    .flow-box small{display:block;color:var(--muted);font-size:0.72rem;margin-top:2px;}
+    .flow-box.accent{border-color:var(--accent);color:var(--accent);}.flow-box.green{border-color:var(--green);color:var(--green);}.flow-box.yellow{border-color:var(--yellow);color:var(--yellow);}.flow-box.orange{border-color:var(--orange);color:var(--orange);}.flow-box.purple{border-color:var(--accent2);color:var(--accent2);}.flow-box.cyan{border-color:var(--cyan);color:var(--cyan);}
+    .flow-arrow{color:var(--muted);font-size:1.2rem;padding:0 8px;}
+    .file-table{width:100%;border-collapse:collapse;font-size:0.88rem;}
+    .file-table th{text-align:left;color:var(--muted);font-weight:500;border-bottom:1px solid var(--border);padding:8px 12px 8px 0;}
+    .file-table td{padding:9px 12px 9px 0;border-bottom:1px solid var(--border);vertical-align:top;}
+    .file-table tr:last-child td{border-bottom:none;}
+    .file-table code{font-family:monospace;color:var(--accent);background:var(--surface2);border-radius:4px;padding:1px 6px;font-size:0.82rem;}
+    .pill{display:inline-block;border-radius:20px;padding:1px 10px;font-size:0.75rem;font-weight:600;border:1px solid;}
+    .pill.blue{color:var(--accent);border-color:var(--accent);}.pill.green{color:var(--green);border-color:var(--green);}.pill.orange{color:var(--orange);border-color:var(--orange);}.pill.purple{color:var(--accent2);border-color:var(--accent2);}.pill.cyan{color:var(--cyan);border-color:var(--cyan);}
+    .param-grid{display:grid;grid-template-columns:auto 1fr;gap:6px 18px;font-size:0.88rem;}
+    .param-grid .label{color:var(--muted);white-space:nowrap;}.param-grid .val{color:var(--text);font-family:monospace;}
+    .tag{display:inline-block;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:2px 9px;font-size:0.78rem;color:var(--muted);margin:3px 2px;}
+    .step-file{font-family:monospace;font-size:0.8rem;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:1px 7px;display:inline-block;margin-bottom:6px;color:var(--accent);}
+    .endpoint{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 18px;margin-bottom:10px;}
+    .method{display:inline-block;font-size:0.75rem;font-weight:700;border-radius:4px;padding:2px 8px;margin-right:8px;}
+    .method.get{background:#1a4731;color:var(--green);}.method.post{background:#1a2e4a;color:var(--accent);}
+    .endpoint-path{font-family:monospace;font-size:0.9rem;}
+    .endpoint-desc{color:var(--muted);font-size:0.85rem;margin-top:6px;}
+    section{margin-bottom:52px;}
+  </style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <h1><span>CNC</span>Search</h1>
+    <p>Semantic hymn search engine — web UI + Telegram bot, liturgical moments, CSV import</p>
+    <div>
+      <span class="badge blue">Python 3.11+</span>
+      <span class="badge green">FastAPI 0.110</span>
+      <span class="badge purple">Jina AI / sentence-transformers</span>
+      <span class="badge orange">SQLAlchemy 2.0</span>
+      <span class="badge cyan">Caddy HTTPS</span>
+      <span class="badge">SQLite</span>
+    </div>
+  </header>
+
+  <section>
+    <h2>1. What this project does</h2>
+    <div class="grid-2">
+      <div class="card">
+        <h3>Purpose</h3>
+        <p style="color:var(--muted);font-size:0.9rem;margin-bottom:12px;">
+          Upload and manage a parish hymn database. Given any biblical passage or liturgical
+          text, find the most thematically similar hymns using cosine similarity on
+          sentence embeddings. Accessible via a secured web interface and Telegram bot commands.
+        </p>
+        <div>
+          <span class="tag">Semantic search</span><span class="tag">Liturgical moments</span>
+          <span class="tag">CSV import</span><span class="tag">Cosine similarity</span>
+          <span class="tag">Session auth</span><span class="tag">Public endpoint</span>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Stack</h3>
+        <div class="param-grid">
+          <span class="label">Web</span><span class="val">FastAPI + Jinja2 + Bootstrap 5</span>
+          <span class="label">Embeddings</span><span class="val">Jina AI API or sentence-transformers (local)</span>
+          <span class="label">Search</span><span class="val">Cosine similarity (numpy)</span>
+          <span class="label">Auth</span><span class="val">bcrypt + itsdangerous sessions</span>
+          <span class="label">DB</span><span class="val">SQLAlchemy 2.0 + SQLite</span>
+          <span class="label">Proxy</span><span class="val">Caddy 2 (sslip.io HTTPS)</span>
+          <span class="label">Bot</span><span class="val">python-telegram-bot 20+</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>2. Pipelines</h2>
+    <div class="card">
+      <div style="overflow-x:auto;"><div style="min-width:600px;">
+        <p style="color:var(--muted);font-size:0.82rem;margin-bottom:8px;">Web search flow</p>
+        <div class="flow">
+          <div class="flow-box accent"><strong>Login</strong><small>bcrypt verify</small></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box"><strong>Query text</strong><small>biblical passage</small></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box purple"><strong>Embed query</strong><small>Jina / local</small></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box cyan"><strong>Cosine sim</strong><small>all hymns</small></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box green"><strong>Top-N results</strong><small>filtered by moment</small></div>
+        </div>
+        <p style="color:var(--muted);font-size:0.82rem;margin:14px 0 8px;">Hymn import flow</p>
+        <div class="flow">
+          <div class="flow-box"><strong>Source</strong><small>CSV / OCR / docx / manual</small></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box orange"><strong>Parse rows</strong><small>create moments</small></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box yellow"><strong>Clean lyrics</strong><small>page #s, symbols, NFC</small></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box purple"><strong>Generate embeddings</strong><small>from cleaned text</small></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box accent"><strong>SQLite</strong><small>canticos table</small></div>
+        </div>
+        <p style="color:var(--muted);font-size:0.75rem;margin-top:6px;">Cleaning runs at the repository write boundary, so every path (CSV, OCR, docx, manual edit) stores — and embeds — the same cleaned text.</p>
+        <p style="color:var(--muted);font-size:0.82rem;margin:14px 0 8px;">Telegram flow</p>
+        <div class="flow">
+          <div class="flow-box"><strong>/canticos [N] [-m moment] text</strong></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box purple"><strong>Embed + search</strong></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box green"><strong>Reply top-N</strong><small>inline results</small></div>
+        </div>
+      </div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>3. API endpoints</h2>
+    <div class="card">
+      <div class="endpoint">
+        <span class="method get">GET</span><span class="endpoint-path">/canticos</span>
+        <div class="endpoint-desc">Authenticated hymn list + CRUD interface</div>
+      </div>
+      <div class="endpoint">
+        <span class="method post">POST</span><span class="endpoint-path">/search</span>
+        <div class="endpoint-desc">Semantic search — body: {query, moment_filter, top_n}</div>
+      </div>
+      <div class="endpoint">
+        <span class="method get">GET</span><span class="endpoint-path">/paroquia/search</span>
+        <div class="endpoint-desc">Public search endpoint for partner parish</div>
+      </div>
+      <div class="endpoint">
+        <span class="method post">POST</span><span class="endpoint-path">/canticos/import</span>
+        <div class="endpoint-desc">CSV import — creates moments on-the-fly, re-indexes embeddings</div>
+      </div>
+      <div class="endpoint">
+        <span class="method post">POST</span><span class="endpoint-path">/settings/reindex</span>
+        <div class="endpoint-desc">Regenerate all embeddings (after model change)</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>4. Database schema</h2>
+    <div class="card">
+      <table class="file-table">
+        <thead><tr><th>Table</th><th>Key columns</th><th>Role</th></tr></thead>
+        <tbody>
+          <tr><td><code>canticos</code></td><td>id, title, lyrics, sheet_url, embedding (blob), source</td><td><span class="pill blue">hymns</span></td></tr>
+          <tr><td><code>moments</code></td><td>id, name (Entrada, Comunhão…)</td><td><span class="pill green">liturgical</span></td></tr>
+          <tr><td><code>cantico_moments</code></td><td>cantico_id FK, moment_id FK</td><td><span class="pill purple">m2m</span></td></tr>
+          <tr><td><code>settings</code></td><td>key, value (web_username, password_hash, top_n, min_similarity)</td><td><span class="pill orange">config KV</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>5. Key files</h2>
+    <div class="card">
+      <table class="file-table">
+        <thead><tr><th>File</th><th>Role</th><th>Type</th></tr></thead>
+        <tbody>
+          <tr><td><code>cncsearch/web/app.py</code></td><td>FastAPI factory, security middleware, lifespan</td><td><span class="pill blue">core</span></td></tr>
+          <tr><td><code>cncsearch/search/service.py</code></td><td>Embedding generation + cosine similarity search</td><td><span class="pill purple">search</span></td></tr>
+          <tr><td><code>cncsearch/database/models.py</code></td><td>SQLAlchemy ORM — Cantico, Moment, Setting</td><td><span class="pill orange">data</span></td></tr>
+          <tr><td><code>cncsearch/telegram/handler.py</code></td><td>Telegram /canticos command handler</td><td><span class="pill cyan">bot</span></td></tr>
+          <tr><td><code>cncsearch/bible/lookup.py</code></td><td>Biblical reference expansion (João 3:16 → full text)</td><td><span class="pill green">util</span></td></tr>
+          <tr><td><code>cncsearch/ingest/clean.py</code></td><td>Shared lyric cleaner — page #s, stray symbols, NFC; applied on every write</td><td><span class="pill green">ingest</span></td></tr>
+          <tr><td><code>scripts/resucito_import.py</code></td><td>Resucito hymnal bulk import with OCR</td><td><span class="pill orange">import</span></td></tr>
+          <tr><td><code>scripts/reclean_db.py</code></td><td>Re-clean already-imported lyrics (--dry-run / --apply)</td><td><span class="pill orange">import</span></td></tr>
+          <tr><td><code>docker-compose.yml</code></td><td>3-service stack: cncsearch + caddy + garminbot</td><td><span class="pill blue">deploy</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>6. Docker setup</h2>
+    <div class="grid-3">
+      <div class="card">
+        <div class="step-file">cncsearch</div>
+        <h3>Web + API</h3>
+        <p style="color:var(--muted);font-size:0.88rem;">FastAPI app on :8080. Shared <code>cncsearch_data</code> volume for SQLite accessible across containers.</p>
+      </div>
+      <div class="card">
+        <div class="step-file">cncsearch_caddy</div>
+        <h3>HTTPS proxy</h3>
+        <p style="color:var(--muted);font-size:0.88rem;">Caddy 2 with sslip.io automatic TLS. Routes external HTTPS traffic to cncsearch:8080.</p>
+      </div>
+      <div class="card">
+        <div class="step-file">garminbot</div>
+        <h3>Telegram bot</h3>
+        <p style="color:var(--muted);font-size:0.88rem;">GarminBot extended with CNCSearch handlers via PYTHONPATH mount. Shares cncsearch_data volume.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer style="border-top:1px solid var(--border);padding-top:20px;text-align:center;color:var(--muted);font-size:0.82rem;">
+    CNCSearch &nbsp;·&nbsp; FastAPI + sentence-transformers + SQLite + Caddy &nbsp;·&nbsp; <a href="../index.html">← All Projects</a>
+  </footer>
+</div>
+</body>
+</html>

@@ -7,6 +7,12 @@ __pycache__/
 venv/
 *.egg-info/
 .pytest_cache/
+.coverage
+htmlcov/
+
+# Claude Code local context (never commit)
+CLAUDE.md
+.claudeignore
 
 # Resucito importer cache
 scripts/resucito_songs.json

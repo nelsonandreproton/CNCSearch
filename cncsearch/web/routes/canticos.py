@@ -83,7 +83,9 @@ async def create_cantico(request: Request):
     cantico = repo.create_cantico(title, lyrics, sheet_url, moment_ids or None)
 
     try:
-        await asyncio.to_thread(search.embed_and_store, cantico.id, title, lyrics)
+        # Embed the cleaned/stored lyrics, not the raw form input, so the
+        # embedding matches what is displayed and searched.
+        await asyncio.to_thread(search.embed_and_store, cantico.id, title, cantico.lyrics)
         return RedirectResponse("/canticos?success=Cântico+criado+com+sucesso", status_code=303)
     except Exception as exc:
         logger.error("Embedding failed for cantico %d: %s", cantico.id, exc, exc_info=True)
@@ -186,12 +188,13 @@ async def update_cantico(request: Request, cantico_id: int):
                 status_code=400,
             )
 
-    updated = repo.update_cantico(cantico_id, title, lyrics, sheet_url, moment_ids or None)
-    if not updated:
+    cleaned_lyrics = repo.update_cantico(cantico_id, title, lyrics, sheet_url, moment_ids or None)
+    if cleaned_lyrics is None:
         return RedirectResponse("/canticos?error=Cântico+não+encontrado", status_code=302)
 
     try:
-        await asyncio.to_thread(search.embed_and_store, cantico_id, title, lyrics)
+        # Embed the cleaned/stored lyrics, not the raw form input.
+        await asyncio.to_thread(search.embed_and_store, cantico_id, title, cleaned_lyrics)
         return RedirectResponse("/canticos?success=Cântico+actualizado", status_code=303)
     except Exception as exc:
         logger.error("Embedding failed for cantico %d: %s", cantico_id, exc, exc_info=True)

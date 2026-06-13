@@ -26,3 +26,7 @@ python-telegram-bot>=20.0
 
 # Uncomment if using EMBEDDING_PROVIDER=local
 # sentence-transformers>=3.0.0
+
+# ── Tests ─────────────────────────────────────────────────────────────────
+pytest>=8.0.0
+pytest-cov>=5.0.0

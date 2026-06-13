@@ -10,6 +10,7 @@ from datetime import UTC, datetime
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import selectinload, sessionmaker
 
+from ..ingest.clean import clean_lyrics
 from .models import Base, Cantico, Moment, Setting, cantico_moments
 
 logger = logging.getLogger(__name__)
@@ -212,7 +213,7 @@ class Repository:
         with self.Session() as s:
             c = Cantico(
                 title=title.strip(),
-                lyrics=lyrics.strip(),
+                lyrics=clean_lyrics(lyrics.strip()),
                 sheet_url=sheet_url.strip() if sheet_url else None,
                 source=source,
             )
@@ -236,13 +237,18 @@ class Repository:
         lyrics: str,
         sheet_url: str | None,
         moment_ids: list[int] | None = None,
-    ) -> bool:
+    ) -> str | None:
+        """Update a cantico. Returns the cleaned lyrics actually stored, or
+        None if the cantico does not exist. Callers must embed the returned
+        (cleaned) text — not their raw input — so embeddings match storage.
+        """
+        cleaned = clean_lyrics(lyrics.strip())
         with self.Session() as s:
             row = s.get(Cantico, cantico_id)
             if not row:
-                return False
+                return None
             row.title = title.strip()
-            row.lyrics = lyrics.strip()
+            row.lyrics = cleaned
             row.sheet_url = sheet_url.strip() if sheet_url else None
             row.moments = [
                 m for mid in (moment_ids or [])
@@ -251,7 +257,7 @@ class Repository:
             row.updated_at = datetime.now(UTC)
             row.embedding = None  # invalidate — caller must re-embed
             s.commit()
-            return True
+            return cleaned
 
     def delete_cantico(self, cantico_id: int) -> bool:
         with self.Session() as s:

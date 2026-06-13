@@ -161,6 +161,48 @@ title,lyrics,sheet_url,moment
 
 ---
 
+## Limpeza de letras (ingestão)
+
+Todas as letras passam por um módulo de limpeza partilhado
+(`cncsearch/ingest/clean.py`) **em todos os caminhos de escrita** — importação
+OCR (resucito), `.docx` (paróquia), CSV e edição manual na Web UI. A limpeza:
+
+- normaliza Unicode para NFC;
+- remove números de página soltos e linhas só com símbolos (`|`, `I`, …);
+- colapsa sequências de linhas em branco;
+- **preserva** marcadores `(BIS)`/`(R)` e referências bíblicas (`Salmo 51 (50)`).
+
+A limpeza corre no *write boundary* do repositório, por isso a letra **gravada**
+é igual à que alimenta o embedding.
+
+### Re-limpar letras já importadas
+
+Para sanear cânticos importados antes deste módulo, sem reprocessar imagens:
+
+```bash
+# Pré-visualizar (diff por cântico) — NÃO escreve nada na BD:
+python scripts/reclean_db.py --dry-run
+
+# Aplicar (invalida os embeddings dos cânticos alterados):
+python scripts/reclean_db.py --apply
+```
+
+> **Faz sempre backup de `data/cncsearch.db` antes de `--apply`.** Depois, na
+> Web UI: *Definições → Re-indexar todos os cânticos* (os embeddings dos
+> cânticos alterados foram invalidados e precisam de ser regenerados).
+
+---
+
+## Testes
+
+```bash
+pip install -r requirements.txt          # inclui pytest + pytest-cov
+python -m pytest tests/ -q               # corre a suite
+python -m pytest tests/ --cov=cncsearch  # com cobertura
+```
+
+---
+
 ## Variáveis de ambiente
 
 ### CNCSearch (`.env`)
