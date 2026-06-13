@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CNCSearch — Plano de melhoria da ingestão (passos no teu PC)</title>
+<style>
+  :root {
+    --bg: #f7f7f9; --card: #fff; --ink: #1f2330; --muted: #5b6170;
+    --line: #e3e6ee; --accent: #2f6feb; --warn: #b54708; --warnbg: #fff6ed;
+    --ok: #126b3f; --okbg: #effaf3; --code: #f2f3f7; --you: #ede7ff; --claude: #e7f0ff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.6 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 32px 20px 80px; }
+  header.title { border-bottom: 3px solid var(--accent); padding-bottom: 16px; margin-bottom: 8px; }
+  h1 { font-size: 28px; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0; }
+  h2 { font-size: 21px; margin: 36px 0 12px; padding-top: 8px; }
+  h3 { font-size: 17px; margin: 22px 0 8px; }
+  p { margin: 10px 0; }
+  code, pre { font-family: "SF Mono", Consolas, "Liberation Mono", monospace; }
+  code { background: var(--code); padding: 1px 6px; border-radius: 5px; font-size: 90%; }
+  pre {
+    background: #1e2230; color: #e8eaf2; padding: 14px 16px; border-radius: 10px;
+    overflow-x: auto; font-size: 13.5px; line-height: 1.5;
+  }
+  pre .c { color: #8b93a7; } /* comment */
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 18px 20px; margin: 16px 0; box-shadow: 0 1px 2px rgba(0,0,0,.03);
+  }
+  .tag {
+    display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .04em;
+    text-transform: uppercase; padding: 3px 9px; border-radius: 20px; vertical-align: middle;
+  }
+  .tag.you { background: var(--you); color: #5b21b6; }
+  .tag.claude { background: var(--claude); color: #1d4ed8; }
+  .legend { display: flex; gap: 18px; flex-wrap: wrap; margin: 14px 0 4px; font-size: 14px; }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .note { background: var(--warnbg); border-left: 4px solid var(--warn); padding: 12px 16px; border-radius: 6px; margin: 14px 0; }
+  .ok   { background: var(--okbg);  border-left: 4px solid var(--ok);   padding: 12px 16px; border-radius: 6px; margin: 14px 0; }
+  .phase-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .pill { background: var(--accent); color: #fff; font-weight: 700; border-radius: 8px; padding: 2px 10px; font-size: 14px; }
+  ul, ol { margin: 8px 0; padding-left: 22px; }
+  li { margin: 6px 0; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 14.5px; }
+  th, td { border: 1px solid var(--line); padding: 8px 11px; text-align: left; vertical-align: top; }
+  th { background: #eef1f8; }
+  .check { list-style: none; padding-left: 0; }
+  .check li::before { content: "☐ "; color: var(--accent); font-weight: 700; }
+  .small { font-size: 13px; color: var(--muted); }
+  hr { border: none; border-top: 1px solid var(--line); margin: 28px 0; }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="title">
+  <h1>CNCSearch — Melhoria da ingestão de cânticos</h1>
+  <p class="sub">Runbook passo a passo para correres no teu PC · Branch <code>claude/chant-ingestion-analysis-2qfryl</code></p>
+</header>
+
+<p>Objetivo: reduzir os erros e "caracteres esquisitos" nas letras dos cânticos, melhorando
+tanto a leitura como a qualidade da pesquisa semântica (as letras alimentam os embeddings).
+O âmbito acordado são <strong>quatro frentes</strong>:</p>
+
+<table>
+  <tr><th>#</th><th>Melhoria</th><th>Resolve</th></tr>
+  <tr><td><strong>#1</strong></td><td>Módulo único de limpeza de texto, aplicado em todos os caminhos de importação e na edição manual</td><td>Ruído: nºs de página, símbolos soltos, anotações de cifra, linhas duplicadas, normalização Unicode (NFC)</td></tr>
+  <tr><td><strong>#2</strong></td><td>Script de re-limpeza da base de dados existente + re-indexação</td><td>Limpa os cânticos <em>já importados</em> sem reprocessar imagens</td></tr>
+  <tr><td><strong>#3</strong></td><td>OCR ciente de colunas (dividir a pauta nas colunas antes do OCR)</td><td>A <strong>ordem dos versos baralhada</strong> — o problema mais grave, que a limpeza não consegue corrigir</td></tr>
+  <tr><td><strong>#4</strong></td><td>Filtragem por confiança do OCR (<code>image_to_data</code>) + marcação de cânticos para revisão</td><td>Descarta tokens-lixo e identifica letras de baixa qualidade</td></tr>
+</table>
+
+<div class="legend">
+  <span><span class="tag claude">Claude</span> eu escrevo/entrego o código (em PRs seguintes)</span>
+  <span><span class="tag you">Tu</span> executas no teu PC (precisa de rede, Tesseract e Chromium)</span>
+</div>
+
+<div class="note">
+<strong>Porque é que estes passos são teus.</strong> O ambiente remoto do Claude Code <em>não</em> tem
+acesso de rede a <code>media.ressuscitou.pt</code> / <code>app.resucito.es</code> (bloqueados pela política de egress),
+nem tem o <code>Tesseract</code> ou o <code>Chromium</code> instalados. Reprocessar OCR é, por isso, uma operação local.
+Eu só preciso de <strong>ver 1–2 imagens de exemplo</strong> para calibrar a divisão de colunas do #3.
+</div>
+
+<hr>
+
+<h2><span class="phase-head"><span class="pill">Fase 0</span> Preparar o ambiente local <span class="tag you">Tu</span></span></h2>
+
+<p>Comandos em <strong>PowerShell (Windows)</strong>, a partir da raiz do repositório
+(ex. <code>C:\DEV\CNCSearch</code>). Em Linux/macOS os comandos <code>python</code>/<code>pip</code> são equivalentes.</p>
+
+<pre><span class="c"># 1. Obter o branch de trabalho</span>
+git fetch origin
+git checkout claude/chant-ingestion-analysis-2qfryl
+git pull origin claude/chant-ingestion-analysis-2qfryl
+
+<span class="c"># 2. Ambiente virtual + dependências do projeto</span>
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+
+<span class="c"># 3. Browser do Playwright (necessário para obter a lista de cânticos)</span>
+playwright install chromium</pre>
+
+<h3>Instalar o Tesseract OCR + pacote de Português</h3>
+<pre><span class="c"># Windows (via winget)</span>
+winget install UB-Mannheim.TesseractOCR
+
+<span class="c"># Confirma que o idioma 'por' está instalado:</span>
+tesseract --list-langs        <span class="c"># deve aparecer "por" na lista</span>
+tesseract --version</pre>
+
+<p class="small">Se o <code>por</code> não aparecer, no instalador UB-Mannheim escolhe
+<em>Additional language data → Portuguese</em>, ou copia <code>por.traineddata</code> para a pasta <code>tessdata</code>.
+O script já aponta para <code>C:\Program Files\Tesseract-OCR\tesseract.exe</code> no Windows.</p>
+
+<div class="note">
+<strong>Backup obrigatório antes de mexer na base de dados.</strong> As Fases 2 e 3 alteram <code>data/cncsearch.db</code>.
+<pre><span class="c"># Copia de segurança datada da BD</span>
+Copy-Item data\cncsearch.db ("data\cncsearch.backup-{0}.db" -f (Get-Date -Format "yyyyMMdd-HHmmss"))</pre>
+</div>
+
+<ul class="check">
+  <li>Branch <code>claude/chant-ingestion-analysis-2qfryl</code> obtido</li>
+  <li><code>pip install -r requirements.txt</code> sem erros</li>
+  <li><code>playwright install chromium</code> concluído</li>
+  <li><code>tesseract --list-langs</code> mostra <code>por</code></li>
+  <li>Backup de <code>data/cncsearch.db</code> criado</li>
+</ul>
+
+<hr>
+
+<h2><span class="phase-head"><span class="pill">Fase 1</span> Enviar imagens de exemplo <span class="tag you">Tu</span></span></h2>
+
+<p><strong>Este passo desbloqueia o #3.</strong> Preciso de ver pautas reais para calibrar a deteção
+da goteira entre colunas (e perceber se há cânticos a uma só coluna que não devo partir ao meio).</p>
+
+<pre><span class="c"># Faz o script descarregar as imagens para a cache local (sem escrever na BD)</span>
+python scripts/resucito_import.py --dry-run --limit 8
+
+<span class="c"># As imagens ficam em: scripts/resucito_images/*.png</span></pre>
+
+<p>Depois, <strong>anexa-me no chat 2 a 3 PNGs representativos</strong>:</p>
+<ul>
+  <li>Pelo menos <strong>uma pauta claramente a 2 colunas</strong> (ex. <code>a_espada.png</code>);</li>
+  <li>Se existir, <strong>uma a 1 coluna</strong> (para eu não a dividir indevidamente);</li>
+  <li>Uma com bastante texto / refrões repetidos.</li>
+</ul>
+
+<p class="small">Alternativa: copia esses ficheiros para uma pasta <code>scripts/samples/</code> e faz commit —
+mas anexar no chat é mais rápido e evita versionar binários grandes.</p>
+
+<ul class="check">
+  <li>Imagens descarregadas para <code>scripts/resucito_images/</code></li>
+  <li>2–3 PNGs representativos enviados ao Claude</li>
+</ul>
+
+<div class="ok">
+<strong>Ponto de sincronização.</strong> Depois desta fase, eu entrego o código das Fases 2 e 3
+(em PRs separados). As fases seguintes assumem que já fizeste <code>git pull</code> desse código.
+</div>
+
+<hr>
+
+<h2><span class="phase-head"><span class="pill">Fase 2</span> Limpeza de texto + re-limpeza da BD (#1, #2) <span class="tag claude">Claude</span> → <span class="tag you">Tu</span></span></h2>
+
+<p><span class="tag claude">Claude</span> entrega: um módulo de limpeza partilhado (ex.
+<code>cncsearch/ingest/clean.py</code>) ligado a todos os caminhos de importação e à edição manual,
+mais um script <code>scripts/reclean_db.py</code> para sanear as letras já existentes.</p>
+
+<h3><span class="tag you">Tu</span> executas:</h3>
+<pre><span class="c"># Obter o código novo</span>
+git pull origin claude/chant-ingestion-analysis-2qfryl
+
+<span class="c"># 1. Pré-visualizar a limpeza SEM gravar (mostra um diff por cântico)</span>
+python scripts/reclean_db.py --dry-run
+
+<span class="c"># 2. Se o diff fizer sentido, aplicar à base de dados</span>
+python scripts/reclean_db.py --apply
+
+<span class="c"># 3. Re-indexar embeddings (as letras mudaram → os embeddings têm de ser refeitos)</span></pre>
+
+<p>Re-indexação faz-se na <strong>Web UI</strong>: <em>Definições → "Re-indexar todos os cânticos"</em>.
+(É o endpoint <code>POST /reindex</code>; gera novos embeddings via Jina ou modelo local.)</p>
+
+<ul class="check">
+  <li><code>reclean_db.py --dry-run</code> revisto e aprovado</li>
+  <li><code>reclean_db.py --apply</code> executado</li>
+  <li>Re-indexação concluída na Web UI (Definições mostra 0 cânticos sem embedding)</li>
+</ul>
+
+<hr>
+
+<h2><span class="phase-head"><span class="pill">Fase 3</span> Re-OCR por colunas + confiança (#3, #4) <span class="tag claude">Claude</span> → <span class="tag you">Tu</span></span></h2>
+
+<p><span class="tag claude">Claude</span> entrega: <code>resucito_import.py</code> revisto — divide a imagem nas colunas
+antes do OCR, lê cada coluna de cima a baixo, e usa <code>image_to_data</code> para descartar tokens de
+baixa confiança e marcar cânticos duvidosos para revisão.</p>
+
+<h3><span class="tag you">Tu</span> executas:</h3>
+<pre><span class="c"># Obter o código novo</span>
+git pull origin claude/chant-ingestion-analysis-2qfryl
+
+<span class="c"># 1. Teste em poucos cânticos, SEM escrever na BD — inspeciona a ordem dos versos</span>
+python scripts/resucito_import.py --dry-run --limit 5
+
+<span class="c"># 2. Quando a ordem/qualidade estiverem bem, correr a importação completa</span>
+<span class="c">#    (o script salta duplicados; para REPROCESSAR letras já existentes</span>
+<span class="c">#     segue a indicação do PR — provavelmente uma flag --reocr)</span>
+python scripts/resucito_import.py
+
+<span class="c"># 3. Re-indexar novamente na Web UI (Definições → Re-indexar)</span></pre>
+
+<div class="note">
+<strong>Atenção ao reprocessamento.</strong> O importador atual salta cânticos cujo título já existe.
+Para <em>substituir</em> letras antigas pelas novas (OCR melhorado), o PR incluirá a forma correta de o fazer
+(flag dedicada ou limpeza prévia). Faz sempre o <code>--dry-run</code> primeiro e confirma o backup da Fase 0.
+</div>
+
+<ul class="check">
+  <li><code>--dry-run --limit 5</code>: ordem dos versos correta nas colunas</li>
+  <li>Importação/reprocessamento completo executado</li>
+  <li>Re-indexação concluída</li>
+</ul>
+
+<hr>
+
+<h2><span class="phase-head"><span class="pill">Fase 4</span> Verificação final <span class="tag you">Tu</span></span></h2>
+
+<ul>
+  <li>Abre a Web UI e revê 5–10 cânticos que antes estavam piores (ex. <em>A Espada</em>, <em>A Ti levanto os meus olhos</em>).</li>
+  <li>Confirma que desapareceram: números de página soltos, símbolos isolados, anotações de cifra
+      (<em>Travessão / trasto</em>), e versos baralhados entre colunas.</li>
+  <li>Faz 2–3 pesquisas de teste (ou via <code>/canticos</code> no Telegram) e confirma que os resultados
+      melhoraram ou se mantiveram coerentes.</li>
+  <li>Revê a lista de cânticos marcados "para revisão" (#4) e corrige manualmente os que ficarem.</li>
+</ul>
+
+<ul class="check">
+  <li>Amostra de cânticos verificada na Web UI</li>
+  <li>Pesquisas de teste OK</li>
+  <li>Cânticos sinalizados para revisão tratados</li>
+</ul>
+
+<hr>
+
+<h2>Resumo da divisão de trabalho</h2>
+<table>
+  <tr><th>Fase</th><th>Quem</th><th>O quê</th></tr>
+  <tr><td>0</td><td><span class="tag you">Tu</span></td><td>Preparar ambiente (deps, Tesseract, Chromium) + backup da BD</td></tr>
+  <tr><td>1</td><td><span class="tag you">Tu</span></td><td>Descarregar imagens e enviar 2–3 exemplos ao Claude</td></tr>
+  <tr><td>2</td><td><span class="tag claude">Claude</span> + <span class="tag you">Tu</span></td><td>Limpeza (#1) e re-limpeza da BD (#2) + reindex</td></tr>
+  <tr><td>3</td><td><span class="tag claude">Claude</span> + <span class="tag you">Tu</span></td><td>OCR por colunas (#3) e confiança (#4) + reindex</td></tr>
+  <tr><td>4</td><td><span class="tag you">Tu</span></td><td>Verificação e revisão manual final</td></tr>
+</table>
+
+<p class="small">O próximo passo imediato é a <strong>Fase 1</strong>: envia-me as imagens de exemplo para eu começar o código do #3.</p>
+
+</div>
+</body>
+</html>
