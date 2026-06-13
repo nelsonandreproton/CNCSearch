@@ -46,6 +46,7 @@ class Cantico(Base):
     lyrics = Column(Text, nullable=False)
     sheet_url = Column(String(500), nullable=True)
     source = Column(String(50), nullable=False, server_default="caminho")
+    needs_review = Column(Integer, nullable=False, server_default=sa_text("0"))
     embedding = Column(LargeBinary, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(UTC))
     updated_at = Column(

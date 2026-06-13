@@ -191,6 +191,38 @@ python scripts/reclean_db.py --apply
 > Web UI: *Definições → Re-indexar todos os cânticos* (os embeddings dos
 > cânticos alterados foram invalidados e precisam de ser regenerados).
 
+### Re-OCR por colunas (corrigir ordem dos versos)
+
+As pautas Resucito são, na maioria, a **duas colunas**. O OCR antigo lia a
+largura toda linha-a-linha, **baralhando a ordem dos versos** (e perdendo
+acentos). O re-OCR por colunas deteta a goteira, lê cada coluna de cima a
+baixo, e reprocessa a imagem original (recupera acentos). Confiança baixa do
+OCR marca o cântico para revisão manual (`needs_review`).
+
+Precisa de **Tesseract + as imagens em cache** — corre **localmente**, não no
+servidor. Produz um artefacto JSON portátil que se aplica em produção sem
+imagens nem Tesseract:
+
+```bash
+# 1. LOCAL — re-OCR das pautas em cache para JSON (não escreve na BD):
+python scripts/reocr_export.py                       # todas
+python scripts/reocr_export.py --title "sião"        # filtrar por título
+python scripts/reocr_export.py --limit 5             # testar poucas
+
+# 2. Copiar scripts/reocr_export.json para o servidor.
+
+# 3. SERVIDOR — pré-visualizar (diff por cântico, NÃO escreve):
+python scripts/apply_reocr.py reocr_export.json --dry-run
+
+# 4. SERVIDOR — aplicar (match por título; invalida embeddings):
+python scripts/apply_reocr.py reocr_export.json --apply
+```
+
+Depois: *Definições → Re-indexar*, e revê os cânticos marcados `needs_review`.
+
+> O match é por **título** (os IDs locais não alinham com produção).
+> `--dry-run` faz sempre primeiro; backup obrigatório antes de `--apply`.
+
 ---
 
 ## Testes

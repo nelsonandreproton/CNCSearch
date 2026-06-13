@@ -18,3 +18,7 @@ CLAUDE.md
 scripts/resucito_songs.json
 scripts/resucito_images/
 scripts/ocr_test.txt
+
+# Re-OCR generated artifacts (produced locally, copied to server)
+scripts/reocr_export.json
+scripts/reocr_*.json

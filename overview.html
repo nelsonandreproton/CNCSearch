@@ -122,6 +122,19 @@
           <div class="flow-box accent"><strong>SQLite</strong><small>canticos table</small></div>
         </div>
         <p style="color:var(--muted);font-size:0.75rem;margin-top:6px;">Cleaning runs at the repository write boundary, so every path (CSV, OCR, docx, manual edit) stores — and embeds — the same cleaned text.</p>
+        <p style="color:var(--muted);font-size:0.82rem;margin:14px 0 8px;">Column-aware re-OCR flow (local → production)</p>
+        <div class="flow">
+          <div class="flow-box yellow"><strong>Detect columns</strong><small>gutter / 1-vs-2 col</small></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box"><strong>OCR each column</strong><small>top-to-bottom, in order</small></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box orange"><strong>Export JSON</strong><small>+ confidence flag</small></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box purple"><strong>Apply by title</strong><small>on server, no images</small></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box accent"><strong>Re-index</strong><small>flag review</small></div>
+        </div>
+        <p style="color:var(--muted);font-size:0.75rem;margin-top:6px;">Fixes scrambled verse order on two-column sheets. Runs locally (needs Tesseract + cached PNGs); a portable JSON artifact carries the result to production.</p>
         <p style="color:var(--muted);font-size:0.82rem;margin:14px 0 8px;">Telegram flow</p>
         <div class="flow">
           <div class="flow-box"><strong>/canticos [N] [-m moment] text</strong></div>
@@ -166,7 +179,7 @@
       <table class="file-table">
         <thead><tr><th>Table</th><th>Key columns</th><th>Role</th></tr></thead>
         <tbody>
-          <tr><td><code>canticos</code></td><td>id, title, lyrics, sheet_url, embedding (blob), source</td><td><span class="pill blue">hymns</span></td></tr>
+          <tr><td><code>canticos</code></td><td>id, title, lyrics, sheet_url, embedding (blob), source, needs_review</td><td><span class="pill blue">hymns</span></td></tr>
           <tr><td><code>moments</code></td><td>id, name (Entrada, Comunhão…)</td><td><span class="pill green">liturgical</span></td></tr>
           <tr><td><code>cantico_moments</code></td><td>cantico_id FK, moment_id FK</td><td><span class="pill purple">m2m</span></td></tr>
           <tr><td><code>settings</code></td><td>key, value (web_username, password_hash, top_n, min_similarity)</td><td><span class="pill orange">config KV</span></td></tr>
@@ -187,8 +200,12 @@
           <tr><td><code>cncsearch/telegram/handler.py</code></td><td>Telegram /canticos command handler</td><td><span class="pill cyan">bot</span></td></tr>
           <tr><td><code>cncsearch/bible/lookup.py</code></td><td>Biblical reference expansion (João 3:16 → full text)</td><td><span class="pill green">util</span></td></tr>
           <tr><td><code>cncsearch/ingest/clean.py</code></td><td>Shared lyric cleaner — page #s, stray symbols, NFC; applied on every write</td><td><span class="pill green">ingest</span></td></tr>
+          <tr><td><code>cncsearch/ingest/columns.py</code></td><td>Column geometry — detect 1 vs 2 columns, find gutter (pure PIL+numpy)</td><td><span class="pill green">ingest</span></td></tr>
+          <tr><td><code>cncsearch/ingest/ocr.py</code></td><td>Column-aware OCR + confidence flagging (local-only; needs Tesseract)</td><td><span class="pill green">ingest</span></td></tr>
           <tr><td><code>scripts/resucito_import.py</code></td><td>Resucito hymnal bulk import with OCR</td><td><span class="pill orange">import</span></td></tr>
           <tr><td><code>scripts/reclean_db.py</code></td><td>Re-clean already-imported lyrics (--dry-run / --apply)</td><td><span class="pill orange">import</span></td></tr>
+          <tr><td><code>scripts/reocr_export.py</code></td><td>Local re-OCR by columns → portable JSON artifact</td><td><span class="pill orange">import</span></td></tr>
+          <tr><td><code>scripts/apply_reocr.py</code></td><td>Apply re-OCR JSON to DB by title (runs in prod; no images needed)</td><td><span class="pill orange">import</span></td></tr>
           <tr><td><code>docker-compose.yml</code></td><td>3-service stack: cncsearch + caddy + garminbot</td><td><span class="pill blue">deploy</span></td></tr>
         </tbody>
       </table>

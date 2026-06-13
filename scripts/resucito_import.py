@@ -28,7 +28,6 @@ import sys
 import time
 from pathlib import Path
 
-import numpy as np
 import requests
 from dotenv import load_dotenv
 from PIL import Image
@@ -212,42 +211,21 @@ def download_image(url: str) -> Path:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def ocr_image(img_path: Path) -> str:
-    """OCR a song image, stripping red chord annotations first."""
+    """OCR a song image with column-aware reading order (#3).
+
+    Delegates to cncsearch.ingest.ocr.ocr_sheet, which masks red chords,
+    detects 1 vs 2 columns, reads each column top-to-bottom (fixing the
+    scrambled-verse defect of full-width OCR), and cleans the text. This is
+    the single source of truth — the previous full-width --psm 6 logic lived
+    here and is now removed.
+    """
     if not TESSERACT_OK:
         raise RuntimeError("pytesseract is not installed. Run: pip install pytesseract")
 
-    img = Image.open(img_path).convert("RGB")
-    arr = np.array(img)
+    sys.path.insert(0, str(PROJECT_ROOT))
+    from cncsearch.ingest.ocr import ocr_sheet  # noqa: PLC0415
 
-    # Mask red pixels (chord annotations): R >> G and R >> B
-    red_mask = (
-        (arr[:, :, 0].astype(int) - arr[:, :, 1].astype(int) > 60)
-        & (arr[:, :, 0].astype(int) - arr[:, :, 2].astype(int) > 60)
-        & (arr[:, :, 0] > 120)
-    )
-    arr[red_mask] = [255, 255, 255]  # white out chords
-
-    cleaned = Image.fromarray(arr)
-    text: str = pytesseract.image_to_string(
-        cleaned,
-        lang="por",
-        config="--psm 6 --oem 3",
-    )
-
-    # Clean up: collapse excessive blank lines, strip trailing whitespace
-    lines = [line.rstrip() for line in text.splitlines()]
-    deduped: list[str] = []
-    blank_run = 0
-    for line in lines:
-        if line == "":
-            blank_run += 1
-            if blank_run <= 1:
-                deduped.append(line)
-        else:
-            blank_run = 0
-            deduped.append(line)
-
-    return "\n".join(deduped).strip()
+    return ocr_sheet(Image.open(img_path)).lyrics
 
 
 # ─────────────────────────────────────────────────────────────────────────────

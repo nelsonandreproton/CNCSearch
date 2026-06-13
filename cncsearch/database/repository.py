@@ -36,6 +36,7 @@ class Repository:
         Base.metadata.create_all(self.engine)
         self._migrate_v2_moments()
         self._migrate_v3_source()
+        self._migrate_v4_needs_review()
         self._seed_defaults(initial_password_hash)
 
     def _migrate_v2_moments(self) -> None:
@@ -73,6 +74,17 @@ class Repository:
             if "source" not in col_names:
                 conn.execute(text("ALTER TABLE canticos ADD COLUMN source TEXT NOT NULL DEFAULT 'caminho'"))
                 logger.info("Migrated canticos table: added source column (default='caminho')")
+
+    def _migrate_v4_needs_review(self) -> None:
+        """Add needs_review flag to canticos if it doesn't exist yet (#4)."""
+        with self.engine.begin() as conn:
+            pragma = conn.execute(text("PRAGMA table_info(canticos)")).fetchall()
+            col_names = [row[1] for row in pragma]
+            if "needs_review" not in col_names:
+                conn.execute(
+                    text("ALTER TABLE canticos ADD COLUMN needs_review INTEGER NOT NULL DEFAULT 0")
+                )
+                logger.info("Migrated canticos table: added needs_review column (default=0)")
 
     def _seed_defaults(self, initial_password_hash: str) -> None:
         with self.Session() as s:
@@ -258,6 +270,52 @@ class Repository:
             row.embedding = None  # invalidate — caller must re-embed
             s.commit()
             return cleaned
+
+    def reocr_replace_by_title(
+        self, title: str, lyrics: str, needs_review: bool
+    ) -> str | None:
+        """Replace a cantico's lyrics with re-OCR output, matched by title (#3).
+
+        Used by the re-OCR apply step: production IDs do not align with the
+        local DB where re-OCR ran, so matching is by (case-insensitive) title.
+        Preserves source and moment associations, sets needs_review, and
+        invalidates the embedding. Returns the cleaned lyrics stored, or None
+        if no cantico with that title exists.
+        """
+        cleaned = clean_lyrics(lyrics.strip())
+        target = title.strip().lower()  # Python lower() is Unicode-aware (ã→ã)
+        with self.Session() as s:
+            # Match in Python, not SQL: SQLite ilike/NOCASE fold only ASCII, so
+            # accented Portuguese titles ("Sião") would silently miss. Plain
+            # equality also avoids LIKE treating %/_ in titles as wildcards.
+            matches = [
+                r for r in s.query(Cantico).all() if r.title.strip().lower() == target
+            ]
+            if not matches:
+                return None
+            if len(matches) > 1:
+                logger.warning(
+                    "reocr_replace_by_title: %d rows match title %r — updating first",
+                    len(matches), title,
+                )
+            row = matches[0]
+            row.lyrics = cleaned
+            row.needs_review = 1 if needs_review else 0
+            row.updated_at = datetime.now(UTC)
+            row.embedding = None  # invalidate — re-index regenerates
+            s.commit()
+            return cleaned
+
+    def get_canticos_needing_review(self) -> list[Cantico]:
+        with self.Session() as s:
+            rows = (
+                s.query(Cantico)
+                .filter(Cantico.needs_review == 1)
+                .order_by(Cantico.title)
+                .all()
+            )
+            s.expunge_all()
+            return rows
 
     def delete_cantico(self, cantico_id: int) -> bool:
         with self.Session() as s:
