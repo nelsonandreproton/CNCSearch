@@ -272,7 +272,7 @@ class Repository:
             return cleaned
 
     def reocr_replace_by_title(
-        self, title: str, lyrics: str, needs_review: bool
+        self, title: str, lyrics: str, needs_review: bool, source: str | None = None
     ) -> str | None:
         """Replace a cantico's lyrics with re-OCR output, matched by title (#3).
 
@@ -281,16 +281,21 @@ class Repository:
         Preserves source and moment associations, sets needs_review, and
         invalidates the embedding. Returns the cleaned lyrics stored, or None
         if no cantico with that title exists.
+
+        If *source* is given, only rows with that source are considered — this
+        stops a re-OCR'd Resucito pauta from overwriting a parish ('paroquia')
+        song that happens to share the title (e.g. "Cordeiro de Deus").
         """
         cleaned = clean_lyrics(lyrics.strip())
         target = title.strip().lower()  # Python lower() is Unicode-aware (ã→ã)
         with self.Session() as s:
+            q = s.query(Cantico)
+            if source is not None:
+                q = q.filter(Cantico.source == source)
             # Match in Python, not SQL: SQLite ilike/NOCASE fold only ASCII, so
             # accented Portuguese titles ("Sião") would silently miss. Plain
             # equality also avoids LIKE treating %/_ in titles as wildcards.
-            matches = [
-                r for r in s.query(Cantico).all() if r.title.strip().lower() == target
-            ]
+            matches = [r for r in q.all() if r.title.strip().lower() == target]
             if not matches:
                 return None
             if len(matches) > 1:

@@ -100,9 +100,13 @@ def main() -> None:
 
         con = sqlite3.connect(db_path)
         try:
+            # Only Resucito ('caminho') rows, to mirror the source-scoped apply
+            # path — a shared title in 'paroquia' must not shadow the match.
             stored = {
                 t.strip().lower(): lyr
-                for t, lyr in con.execute("SELECT title, lyrics FROM canticos").fetchall()
+                for t, lyr in con.execute(
+                    "SELECT title, lyrics FROM canticos WHERE source = ?", ("caminho",)
+                ).fetchall()
             }
         finally:
             con.close()
@@ -129,18 +133,23 @@ def main() -> None:
         for entry in entries:
             title = entry["title"]
             needs_review = bool(entry.get("needs_review", False))
-            existing = repo.get_cantico_by_title(title)
+            existing = repo.get_cantico_by_title(title, source="caminho")
+            if existing is None:
+                not_found += 1
+                print(f"  NOT FOUND: {title!r}")
+                continue
             cleaned_new = clean_lyrics(entry["new_lyrics"].strip())
-            if existing is not None and cleaned_new == existing.lyrics:
+            if cleaned_new == existing.lyrics:
                 unchanged += 1
                 continue
             changed += 1
-            result = repo.reocr_replace_by_title(title, entry["new_lyrics"], needs_review)
+            # Re-OCR'd sheets are all Resucito imports (source='caminho'); scope
+            # the match so a shared title never overwrites a 'paroquia' song.
+            result = repo.reocr_replace_by_title(
+                title, entry["new_lyrics"], needs_review, source="caminho"
+            )
             if result is not None:
                 applied += 1
-            else:
-                not_found += 1
-                print(f"  NOT FOUND: {title!r}")
 
     print("-" * 60)
     if args.dry_run:

@@ -73,6 +73,30 @@ def test_reocr_replace_unknown_title_returns_none(repo):
     assert repo.reocr_replace_by_title("Inexistente", "x", needs_review=False) is None
 
 
+def test_reocr_replace_only_touches_matching_source(repo):
+    # Same title in two sources: re-OCR (a resucito 'caminho' pauta) must NOT
+    # overwrite the paroquia row, even though the title matches.
+    repo.create_cantico("Cordeiro de Deus", "resucito old", None, source="caminho")
+    repo.create_cantico("Cordeiro de Deus", "paroquia text", None, source="paroquia")
+
+    result = repo.reocr_replace_by_title(
+        "Cordeiro de Deus", "resucito re-ocr", needs_review=False, source="caminho"
+    )
+    assert result is not None  # the caminho row WAS matched and updated
+
+    caminho = repo.get_cantico_by_title("Cordeiro de Deus", source="caminho")
+    paroquia = repo.get_cantico_by_title("Cordeiro de Deus", source="paroquia")
+    assert caminho.lyrics == "resucito re-ocr"   # updated
+    assert paroquia.lyrics == "paroquia text"    # untouched
+
+
+def test_reocr_replace_source_none_matches_any(repo):
+    # Default source=None keeps the old behaviour (match by title only).
+    repo.create_cantico("Sião", "old", None, source="caminho")
+    result = repo.reocr_replace_by_title("Sião", "new", needs_review=False)
+    assert result == "new"
+
+
 def test_get_canticos_needing_review(repo):
     repo.create_cantico("Bom", "ok", None)
     repo.create_cantico("Mau", "ok", None)
