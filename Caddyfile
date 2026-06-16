@@ -13,6 +13,14 @@
         reverse_proxy ptevents:8080
     }
 
+    # AI Daily Brief mindmap — static file deployed by SpotifyTranscript (run_daily.bat)
+    # /aibrief and /aibrief/ both serve /srv/aibrief/mindmap.html (mounted in docker-compose)
+    handle /aibrief* {
+        root * /srv/aibrief
+        rewrite * /mindmap.html
+        file_server
+    }
+
     # Everything else → CNCSearch
     handle {
         reverse_proxy cncsearch:8080
