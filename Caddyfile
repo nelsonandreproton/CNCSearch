@@ -59,3 +59,12 @@ canticos.paroquiacasaldecambra.pt {
 gitlab-mcp.{$CADDY_HOST} {
     reverse_proxy gitlab-mcp-gateway:8808
 }
+
+# ── GarminBot MCP server (read-only health analytics for Claude) ─────────────
+# Endpoint: https://garmin-mcp.<ip-with-dashes>.sslip.io/mcp
+# Auth: Authorization: Bearer <GARMIN_MCP_TOKEN> (enforced by the MCP container).
+# Caddy preserves the original Host header so the server's DNS-rebinding
+# allowlist (MCP_ALLOWED_HOSTS) matches.
+garmin-mcp.{$CADDY_HOST} {
+    reverse_proxy garminbot-mcp:8000
+}
