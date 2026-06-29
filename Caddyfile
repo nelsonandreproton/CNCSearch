@@ -68,3 +68,11 @@ gitlab-mcp.{$CADDY_HOST} {
 garmin-mcp.{$CADDY_HOST} {
     reverse_proxy garminbot-mcp:8000
 }
+
+# ── Phoenix — LLM observability (OTLP traces + UI) ───────────────────────────
+# UI:   https://phoenix.<ip-with-dashes>.sslip.io
+# OTLP: https://phoenix.<ip-with-dashes>.sslip.io/v1/traces (Bearer API key)
+# Auth is enforced by Phoenix itself (PHOENIX_ENABLE_AUTH); Caddy only adds HTTPS.
+phoenix.{$CADDY_HOST} {
+    reverse_proxy phoenix:6006
+}
