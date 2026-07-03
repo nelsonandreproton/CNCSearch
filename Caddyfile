@@ -69,6 +69,15 @@ garmin-mcp.{$CADDY_HOST} {
     reverse_proxy garminbot-mcp:8000
 }
 
+# ── a2a — A2A protocol agent PoC (OutSystems ODC integration) ────────────────
+# Endpoint: https://a2a.<ip-with-dashes>.sslip.io
+# Agent card: https://a2a.<ip-with-dashes>.sslip.io/.well-known/agent-card.json
+# Deployed standalone (own repo/compose), joined to homeserver_default network
+# so this shared Caddy can reach it by container name for TLS.
+a2a.{$CADDY_HOST} {
+    reverse_proxy a2a:8000
+}
+
 # ── Phoenix — LLM observability (OTLP traces + UI) ───────────────────────────
 # UI:   https://phoenix.<ip-with-dashes>.sslip.io
 # OTLP: https://phoenix.<ip-with-dashes>.sslip.io/v1/traces (Bearer API key)
