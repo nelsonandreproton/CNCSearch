@@ -85,3 +85,19 @@ a2a.{$CADDY_HOST} {
 phoenix.{$CADDY_HOST} {
     reverse_proxy phoenix:6006
 }
+
+# ── Nelfoot — online Elifoot clone (friends play in their own browsers) ──────
+# URL: https://nelfoot.<ip-with-dashes>.sslip.io
+# Auth (host password + per-manager invite tokens), Host/Origin checks, rate
+# limiting and CSP are enforced by the app; Caddy adds HTTPS and caps bodies.
+nelfoot.{$CADDY_HOST} {
+    request_body {
+        max_size 64KB
+    }
+    header Strict-Transport-Security "max-age=31536000"
+    # Overwrite (not append) X-Forwarded-For so clients can't spoof their IP
+    # and dodge Nelfoot's per-IP rate limits.
+    reverse_proxy nelfoot:8000 {
+        header_up X-Forwarded-For {remote_host}
+    }
+}
