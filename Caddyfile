@@ -101,3 +101,11 @@ nelfoot.{$CADDY_HOST} {
         header_up X-Forwarded-For {remote_host}
     }
 }
+
+# ── HouseTracker — property auctions in Lisboa/Setúbal ≤ 300k ────────────────
+# URL: https://casas.<ip-with-dashes>.sslip.io
+# Read-only public list (GET / and /health); no auth, no user data.
+casas.{$CADDY_HOST} {
+    header Strict-Transport-Security "max-age=31536000"
+    reverse_proxy housetracker:8080
+}
