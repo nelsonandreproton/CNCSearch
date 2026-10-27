@@ -9,7 +9,7 @@ correspondência contextual, usando embeddings (Jina AI ou sentence-transformers
 
 ## Funcionalidades
 
-- **Bot Telegram** — comando `/canticos` integrado num bot existente (GarminBot)
+- **Bot Telegram** — comandos `/canticos` (semântico) e `/letra` (palavras/frases) integrados num bot existente (GarminBot)
 - **Web UI** (Bootstrap 5, autenticação por sessão)
   - CRUD de cânticos: título, letra, URL da pauta, momento litúrgico
   - Gestão de momentos litúrgicos
@@ -137,6 +137,28 @@ Após o primeiro arranque, o Caddy emite automaticamente um certificado Let's En
 - O **N** e o **momento** são ambos opcionais e independentes.
 - Se o momento não existir, o bot informa.
 - `N` e `min_similarity` por defeito são configuráveis na página Definições.
+
+### Pesquisa por palavras ou frases
+
+```
+/letra [N] [-m momento] palavras ou "frase exacta"
+/letra_paroquia [N] [-m momento] palavras ou "frase exacta"
+```
+
+| Exemplo | Resultado |
+|---|---|
+| `/letra misericórdia` | Cânticos cujo título ou letra contém a palavra |
+| `/letra pão vida` | Contêm **todas** as palavras (qualquer ordem) |
+| `/letra "pão da vida"` | Contêm a frase exacta (palavras seguidas) |
+| `/letra 20 -m Comunhão amor "pão da vida"` | Top 20, filtrado por momento, combinando palavra + frase |
+| `/letra -m "Ação de Graças" louvor` | Momento com espaços entre aspas |
+
+- Ignora maiúsculas e acentos (`coracao` encontra `Coração`).
+- Palavra inteira: `dia` não encontra `diante`.
+- Frases atravessam quebras de linha e pontuação (`"senhor tem piedade"` encontra `Senhor,\ntem piedade`).
+- Aceita aspas curvas (`“ ”`, `« »`) do teclado do telemóvel.
+- Ordena por ocorrências no título, depois na letra. Por defeito 10 resultados (máx. 30); cada um mostra a linha da letra com a correspondência a negrito.
+- Não usa embeddings — funciona mesmo sem a API Jina.
 
 ---
 
