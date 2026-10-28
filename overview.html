@@ -143,6 +143,14 @@
           <div class="flow-arrow">→</div>
           <div class="flow-box green"><strong>Reply top-N</strong><small>inline results</small></div>
         </div>
+        <div class="flow" style="margin-top:8px;">
+          <div class="flow-box"><strong>/letra [N] [-m moment] words "exact phrase"</strong></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box purple"><strong>Accent/case-insensitive match</strong><small>all terms, whole words, no embeddings</small></div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-box green"><strong>Reply with lyric line</strong><small>matches in bold</small></div>
+        </div>
+        <p style="color:var(--muted);font-size:0.75rem;margin-top:6px;">Both commands have a <code>_paroquia</code> variant for the parish hymnal.</p>
       </div></div>
     </div>
   </section>
@@ -197,7 +205,8 @@
           <tr><td><code>cncsearch/web/app.py</code></td><td>FastAPI factory, security middleware, lifespan</td><td><span class="pill blue">core</span></td></tr>
           <tr><td><code>cncsearch/search/service.py</code></td><td>Embedding generation + cosine similarity search</td><td><span class="pill purple">search</span></td></tr>
           <tr><td><code>cncsearch/database/models.py</code></td><td>SQLAlchemy ORM — Cantico, Moment, Setting</td><td><span class="pill orange">data</span></td></tr>
-          <tr><td><code>cncsearch/telegram/handler.py</code></td><td>Telegram /canticos command handler</td><td><span class="pill cyan">bot</span></td></tr>
+          <tr><td><code>cncsearch/search/text.py</code></td><td>Literal word/phrase search over titles + lyrics</td><td><span class="pill purple">search</span></td></tr>
+          <tr><td><code>cncsearch/telegram/handler.py</code></td><td>Telegram /canticos and /letra command handlers</td><td><span class="pill cyan">bot</span></td></tr>
           <tr><td><code>cncsearch/bible/lookup.py</code></td><td>Biblical reference expansion (João 3:16 → full text)</td><td><span class="pill green">util</span></td></tr>
           <tr><td><code>cncsearch/ingest/clean.py</code></td><td>Shared lyric cleaner — page #s, stray symbols, NFC; applied on every write</td><td><span class="pill green">ingest</span></td></tr>
           <tr><td><code>cncsearch/ingest/columns.py</code></td><td>Column geometry — detect 1 vs 2 columns, find gutter (pure PIL+numpy)</td><td><span class="pill green">ingest</span></td></tr>
